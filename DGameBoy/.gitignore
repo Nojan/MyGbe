@@ -5,4 +5,4 @@ __dummy.html
 *.obj
 *.exe
 __test__*__
-DGameBoy/external/*
+external
