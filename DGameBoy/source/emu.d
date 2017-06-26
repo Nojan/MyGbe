@@ -152,10 +152,10 @@ struct Emu {
 
     static string GenSwitch(string opcode, string operand)
     {
-        import std.conv;
+        import std.format;
         string gen = "switch(" ~ opcode ~ ") {";
         foreach(idx; 0..255) {
-            immutable string idx_str = to!string(idx); //convert to hex??
+            immutable string idx_str = format!"%02X"(idx);
             gen ~= "case 0x" ~ idx_str ~ ":";
             gen ~= "opcode_" ~ idx_str ~ "(" ~ operand ~ ");";
             gen ~= "break;";
@@ -371,7 +371,7 @@ private:
     void opcode_75(const u16 operand) {
         cpu.HL = cpu.L;
     }
-    void opcode_76(const u16 operand) {
+    void opcode_36(const u16 operand) {
         cpu.HL = cpu.HL;
     }
     // LD A,n
@@ -734,9 +734,9 @@ private:
     void opcode_9E(const u16 operand) {
         subcu8(cpu.A, cast(u8)cpu.HL);
     }
-    // void opcode_??(const u16 operand) {
-    //     subcu8(cpu.A, cast(u8)(operand & 0x00FF));
-    // }
+    void opcode_DE(const u16 operand) {
+        subcu8(cpu.A, cast(u8)(operand & 0x00FF));
+    }
     // AND n
     void opcode_A7(const u16 operand) {
         and(cpu.A, cpu.A);
@@ -903,7 +903,25 @@ private:
     }
     // 16-Bit Arithmetic
     // ADD HL,n
+    void add_hl(ref u16 destination, u16 value) {
+        assert(false);
+    }
+    void opcode_09(const u16 operand) {
+        add_hl(cpu.HL, cpu.BC);
+    }
+    void opcode_19(const u16 operand) {
+        add_hl(cpu.HL, cpu.DE);
+    }
+    void opcode_29(const u16 operand) {
+        add_hl(cpu.HL, cpu.HL);
+    }
+    void opcode_39(const u16 operand) {
+        add_hl(cpu.HL, cpu.SP);
+    }
     // ADD SP,n
+    void opcode_E8(const u16 operand) {
+        assert(false);
+    }
     // INC nn
     void opcode_03(const u16 operand) {
         cpu.BC++;
@@ -941,6 +959,88 @@ private:
         cpu.FlagC = 0;
         assert(false);
     }
+    // DAA
+    void opcode_27(const u16 operand) { assert(false); }
+    // CPL
+    void opcode_2F(const u16 operand) { assert(false); }
+    // CCF
+    void opcode_3F(const u16 operand) { assert(false); }
+    // SCF
+    void opcode_37(const u16 operand) { assert(false); }
+    // NOP
+    void opcode_00(const u16 operand) {}
+    // HALT
+    void opcode_76(const u16 operand) { assert(false); }
+    // STOP
+    void opcode_10(const u16 operand) { assert(false); }
+    // DI
+    void opcode_F3(const u16 operand) { assert(false); }
+    // EI
+    void opcode_FB(const u16 operand) { assert(false); }
+    // Rotates & Shifts
+    void opcode_07(const u16 operand) { assert(false); }
+    void opcode_17(const u16 operand) { assert(false); }
+    void opcode_0F(const u16 operand) { assert(false); }
+    void opcode_1F(const u16 operand) { assert(false); }
+    // Jumps
+    // JP nn
+    void opcode_C3(const u16 operand) { assert(false); }
+    // JP cc,nn
+    void opcode_C2(const u16 operand) { assert(false); }
+    void opcode_CA(const u16 operand) { assert(false); }
+    void opcode_D2(const u16 operand) { assert(false); }
+    void opcode_DA(const u16 operand) { assert(false); }
+    // JP (HL)
+    void opcode_E9(const u16 operand) { assert(false); }
+    // JR n
+    void opcode_18(const u16 operand) { assert(false); }
+    // JR cc,n
+    void opcode_20(const u16 operand) { assert(false); }
+    void opcode_28(const u16 operand) { assert(false); }
+    void opcode_30(const u16 operand) { assert(false); }
+    void opcode_38(const u16 operand) { assert(false); }
+    // Calls
+    // CALL nn
+    void opcode_CD(const u16 operand) { assert(false); }
+    // CALL cc,nn
+    void opcode_C4(const u16 operand) { assert(false); }
+    void opcode_CC(const u16 operand) { assert(false); }
+    void opcode_D4(const u16 operand) { assert(false); }
+    void opcode_DC(const u16 operand) { assert(false); }
+    // Restarts
+    // RST n
+    void opcode_C7(const u16 operand) { assert(false); }
+    void opcode_CF(const u16 operand) { assert(false); }
+    void opcode_D7(const u16 operand) { assert(false); }
+    void opcode_DF(const u16 operand) { assert(false); }
+    void opcode_E7(const u16 operand) { assert(false); }
+    void opcode_EF(const u16 operand) { assert(false); }
+    void opcode_F7(const u16 operand) { assert(false); }
+    void opcode_FF(const u16 operand) { assert(false); }
+    // Returns
+    // RET
+    void opcode_C9(const u16 operand) { assert(false); }
+    // RET cc
+    void opcode_C0(const u16 operand) { assert(false); }
+    void opcode_C8(const u16 operand) { assert(false); }
+    void opcode_D0(const u16 operand) { assert(false); }
+    void opcode_D8(const u16 operand) { assert(false); }
+    // RETI
+    void opcode_D9(const u16 operand) { assert(false); }
+    // prefix CB
+    void opcode_CB(const u16 operand) { assert(false); }
+    // illegal opcode
+    void opcode_D3(const u16 operand) { assert(false); }
+    void opcode_DB(const u16 operand) { assert(false); }
+    void opcode_DD(const u16 operand) { assert(false); }
+    void opcode_E3(const u16 operand) { assert(false); }
+    void opcode_E4(const u16 operand) { assert(false); }
+    void opcode_EB(const u16 operand) { assert(false); }
+    void opcode_EC(const u16 operand) { assert(false); }
+    void opcode_ED(const u16 operand) { assert(false); }
+    void opcode_F4(const u16 operand) { assert(false); }
+    void opcode_FC(const u16 operand) { assert(false); }
+    void opcode_FD(const u16 operand) { assert(false); }
 private:
     CPU cpu;
     Memory mem;
