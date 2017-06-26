@@ -1,0 +1,8 @@
+{
+	"name": "dgameboy",
+	"description": "A GameBoy emulator written in D",
+	"license": "MIT",
+	"dependencies": {
+		"derelict-sdl2": "~>2.0.0"
+	}
+}
