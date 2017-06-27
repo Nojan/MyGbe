@@ -1,3 +1,4 @@
+// dub build -b=debug --arch=x86_64
 import std.stdio;
 import derelict.sdl2.sdl;
 import emu;
@@ -10,9 +11,9 @@ void fatal_error_if(Cond,Args...)(Cond cond, string format, Args args) {
     }
 }
 
-void main()
+void main(string[] args)
 {
-	auto libSDLName = "external\\SDL2\\lib\\x86\\SDL2.dll";
+	auto libSDLName = "external\\SDL2\\lib\\x64\\SDL2.dll";
 	DerelictSDL2.load(libSDLName);
 	writeln("Edit source/app.d to start your project.");
 
@@ -29,9 +30,24 @@ void main()
 
     auto renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
 	
-
 	bool run = true;
 	Emu emu;
+    if(1 < args.length) {
+        import std.stdio;
+        const string filename = args[1];
+        writeln("Loading " ~ filename);
+        import std.file;
+        fatal_error_if(!exists(filename), filename ~ " doesn't exist."); 
+        File rom = File(filename, "rb");
+        immutable ulong romSize = rom.size();
+        rom.rawRead(emu.MemoryCart());
+
+        emu.cpu.AF = 0x01B0;
+        emu.cpu.BC = 0x0013;
+        emu.cpu.DE = 0x00D8;
+        emu.cpu.HL = 0x014D;
+    }
+
 	while(run) {
 		SDL_Event event;
         while(SDL_PollEvent(&event))

@@ -1,5 +1,6 @@
 // http://blog.rekawek.eu/2017/02/09/coffee-gb/
 // https://github.com/retrio/gb-test-roms
+// https://realboyemulator.wordpress.com/2013/01/18/emulating-the-core-2/
 // My Own Gameboy Emulator
 import opcode;
 import memory;
@@ -23,12 +24,13 @@ union Reg {
 }
 
 struct CPU {
-    Reg rAF = { val : 0 };
-    Reg rBC = { val : 0 };
-    Reg rDE = { val : 0 };
-    Reg rHL = { val : 0 };
+    Reg rAF = { val : 0x01B0 };
+    Reg rBC = { val : 0x0013 };
+    Reg rDE = { val : 0x00D8 };
+    Reg rHL = { val : 0x014D };
     u16 SP = 0xFFFE;
     u16 PC = 0x100;
+    bool IME = true;
 
     @property u16 AF() const { return rAF.val; }
     @property u16 AF(u16 value) { rAF.val = value; return value; }
@@ -144,10 +146,10 @@ struct CPU {
 }
 
 struct Emu {
-
-    void Frame() @nogc
+public:
+    void Frame() 
     {
-
+        Step();
     }
 
     static string GenSwitch(string opcode, string operand)
@@ -168,6 +170,11 @@ struct Emu {
 
     void Step() {
         const u8 opcode = mem.readU8(cpu.PC);
+        {
+            import std.stdio;
+            import std.format;
+            writeln(format!"ROM0:%04X %02X State: AF%04X BC%04X DE%04X HL%04X SP%04X"(cpu.PC, opcode, cpu.AF, cpu.BC, cpu.DE, cpu.HL, cpu.SP));
+        }
         cpu.PC++;
         immutable instruction = instruction_table[opcode];
         u16 operand;
@@ -180,6 +187,10 @@ struct Emu {
 
         mixin(GenSwitch("opcode", "operand"));
     }
+
+    u8[] MemoryCart() {
+        return mem.Cart();
+    } 
 
 private:
     // 8 bit load
@@ -620,10 +631,34 @@ private:
         subu8(dummyDestination, value);
     }
     void inc(ref u8 destination) {
-        assert(false);
+        if((destination & 0x0f) == 0x0f) 
+            cpu.FlagH = 0;
+        else 
+            cpu.FlagH = 1;
+
+	    destination++;
+	
+	    if(0 == destination) 
+            cpu.FlagZ = 1;
+	    else 
+            cpu.FlagZ = 0;
+	
+	    cpu.FlagN = 0;
     }
     void dec(ref u8 destination) {
-        assert(false);
+        if(destination & 0x0f) 
+            cpu.FlagH = 0;
+        else 
+            cpu.FlagH = 1;
+
+	    destination--;
+	
+	    if(0 == destination) 
+            cpu.FlagZ = 1;
+	    else 
+            cpu.FlagZ = 0;
+	
+	    cpu.FlagN = 1;
     }
     // ADD A,n
     void opcode_87(const u16 operand) {
@@ -984,7 +1019,9 @@ private:
     void opcode_1F(const u16 operand) { assert(false); }
     // Jumps
     // JP nn
-    void opcode_C3(const u16 operand) { assert(false); }
+    void opcode_C3(const u16 operand) { 
+        cpu.PC = operand;
+     }
     // JP cc,nn
     void opcode_C2(const u16 operand) { assert(false); }
     void opcode_CA(const u16 operand) { assert(false); }
@@ -995,10 +1032,34 @@ private:
     // JR n
     void opcode_18(const u16 operand) { assert(false); }
     // JR cc,n
-    void opcode_20(const u16 operand) { assert(false); }
-    void opcode_28(const u16 operand) { assert(false); }
-    void opcode_30(const u16 operand) { assert(false); }
-    void opcode_38(const u16 operand) { assert(false); }
+    void opcode_20(const u16 operand) { 
+        if(0 == cpu.FlagZ) {
+            int offset = cast(i8)(0x00FF & operand);
+            int address = cast(int)cpu.PC + offset;
+            cpu.PC = cast(u16)address;
+        }
+    }
+    void opcode_28(const u16 operand) { 
+        if(1 == cpu.FlagZ) {
+            int offset = cast(i8)(0x00FF & operand);
+            int address = cast(int)cpu.PC + offset;
+            cpu.PC = cast(u16)address;
+        }
+    }
+    void opcode_30(const u16 operand) { 
+        if(0 == cpu.FlagC) {
+            int offset = cast(i8)(0x00FF & operand);
+            int address = cast(int)cpu.PC + offset;
+            cpu.PC = cast(u16)address;
+        }
+    }
+    void opcode_38(const u16 operand) { 
+        if(1 == cpu.FlagC) {
+            int offset = cast(i8)(0x00FF & operand);
+            int address = cast(int)cpu.PC + offset;
+            cpu.PC = cast(u16)address;
+        }
+    }
     // Calls
     // CALL nn
     void opcode_CD(const u16 operand) { assert(false); }
@@ -1041,7 +1102,7 @@ private:
     void opcode_F4(const u16 operand) { assert(false); }
     void opcode_FC(const u16 operand) { assert(false); }
     void opcode_FD(const u16 operand) { assert(false); }
-private:
+public:
     CPU cpu;
     Memory mem;
 }

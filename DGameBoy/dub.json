@@ -4,5 +4,10 @@
 	"license": "MIT",
 	"dependencies": {
 		"derelict-sdl2": "~>2.0.0"
+	},
+	"buildTypes": {
+		"debug": {
+			"buildOptions": ["debugMode", "debugInfoC"]
+		}
 	}
 }
