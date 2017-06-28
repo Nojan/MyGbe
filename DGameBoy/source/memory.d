@@ -24,6 +24,7 @@ struct Memory {
     }
 
     enum : u16 {
+        VBLANK = 0x0040,
         TIMA = 0xFF05,
         TMA = 0xFF06,
         TAC = 0xFF07,

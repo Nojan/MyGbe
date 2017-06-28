@@ -149,7 +149,7 @@ struct Emu {
 public:
     void Frame() 
     {
-        Step();
+        CpuStep();
     }
 
     static string GenSwitch(string opcode, string operand)
@@ -168,7 +168,7 @@ public:
     }
 
 
-    void Step() {
+    void CpuStep() {
         const u8 opcode = mem.readU8(cpu.PC);
         {
             import std.stdio;
@@ -185,12 +185,48 @@ public:
         }
         cpu.PC += instruction.length;
 
+        CpuExec(opcode, operand, instruction);
+    }
+
+    void CpuExec(const u8 opcode, const u16 operand, immutable ref instruction) {
         mixin(GenSwitch("opcode", "operand"));
     }
 
     u8[] MemoryCart() {
         return mem.Cart();
-    } 
+    }
+    void Interrupt() {
+        if(!cpu.IME)
+            return;
+        u8 flag = mem.readU8(mem.IF);
+        immutable u8 enable = mem.readU8(mem.IE);
+        immutable u8 fire = enable & flag;
+        if(0 == fire)
+            return;
+        
+        enum : u8 {
+            I_VBLANK = 0,
+            I_LCDC   = 1<<1,
+            I_TIMER  = 1<<2,
+            I_SERIAL = 1<<3,
+            I_JOY    = 1<<4,
+        }
+
+        if(fire & I_VBLANK) {
+            flag &= ~I_VBLANK;
+            vblankInterrupt();
+        }
+
+        mem.writeU8(mem.IF, flag);
+    }
+
+    void vblankInterrupt() {
+        // draw time
+        cpu.IME = 0;
+        immutable u8 opcode = 0xCD;
+        immutable instruction = instruction_table[opcode];
+        CpuExec(opcode, mem.VBLANK, instruction);
+    }
 
 private:
     // 8 bit load
@@ -1009,9 +1045,13 @@ private:
     // STOP
     void opcode_10(const u16 operand) { assert(false); }
     // DI
-    void opcode_F3(const u16 operand) { assert(false); }
+    void opcode_F3(const u16 operand) { 
+        cpu.IME = false;
+    }
     // EI
-    void opcode_FB(const u16 operand) { assert(false); }
+    void opcode_FB(const u16 operand) { 
+        cpu.IME = true;
+    }
     // Rotates & Shifts
     void opcode_07(const u16 operand) { assert(false); }
     void opcode_17(const u16 operand) { assert(false); }
@@ -1062,7 +1102,11 @@ private:
     }
     // Calls
     // CALL nn
-    void opcode_CD(const u16 operand) { assert(false); }
+    void opcode_CD(const u16 operand) { 
+        cpu.SP-=2;
+        mem.writeU16(cpu.SP, cpu.PC);
+        cpu.PC=operand;
+    }
     // CALL cc,nn
     void opcode_C4(const u16 operand) { assert(false); }
     void opcode_CC(const u16 operand) { assert(false); }
@@ -1080,14 +1124,20 @@ private:
     void opcode_FF(const u16 operand) { assert(false); }
     // Returns
     // RET
-    void opcode_C9(const u16 operand) { assert(false); }
+    void opcode_C9(const u16 operand) {     
+        cpu.PC = mem.readU16(cpu.SP);
+        cpu.SP+=2;
+    }
     // RET cc
     void opcode_C0(const u16 operand) { assert(false); }
     void opcode_C8(const u16 operand) { assert(false); }
     void opcode_D0(const u16 operand) { assert(false); }
     void opcode_D8(const u16 operand) { assert(false); }
     // RETI
-    void opcode_D9(const u16 operand) { assert(false); }
+    void opcode_D9(const u16 operand) { 
+        opcode_FB(operand); // EI
+        opcode_C9(operand); // RET
+    }
     // prefix CB
     void opcode_CB(const u16 operand) { assert(false); }
     // illegal opcode
