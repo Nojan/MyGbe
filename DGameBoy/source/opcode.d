@@ -268,260 +268,260 @@ immutable instruction[256] instruction_table = [
 ];
 
 immutable instruction[256] cb_instruction_table = [
-	{ "CB NOP", 2, 8 },                           // 0x00
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x01
-	{ "CB LD (BC), A", 2, 8 },               // 0x02
-	{ "CB INC BC", 2, 8 },                     // 0x03
-	{ "CB INC B", 2, 8 },                       // 0x04
-	{ "CB DEC B", 2, 8 },                       // 0x05
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x06
-	{ "CB RLCA", 2, 8 },                         // 0x07
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x08
-	{ "CB ADD HL, BC", 2, 8 },              // 0x09
-	{ "CB LD A, (BC)", 2, 8 },               // 0x0a
-	{ "CB DEC BC", 2, 8 },                     // 0x0b
-	{ "CB INC C", 2, 8 },                       // 0x0c
-	{ "CB DEC C", 2, 8 },                       // 0x0d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x0e
-	{ "CB RRCA", 2, 8 },                         // 0x0f
-	{ "CB NOP", 2, 8 },                           // 0x10
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x11
-	{ "CB LD (BC), A", 2, 8 },               // 0x12
-	{ "CB INC BC", 2, 8 },                     // 0x13
-	{ "CB INC B", 2, 8 },                       // 0x14
-	{ "CB DEC B", 2, 8 },                       // 0x15
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x16
-	{ "CB RLCA", 2, 8 },                         // 0x17
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x18
-	{ "CB ADD HL, BC", 2, 8 },              // 0x19
-	{ "CB LD A, (BC)", 2, 8 },               // 0x1a
-	{ "CB DEC BC", 2, 8 },                     // 0x1b
-	{ "CB INC C", 2, 8 },                       // 0x1c
-	{ "CB DEC C", 2, 8 },                       // 0x1d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x1e
-	{ "CB RRCA", 2, 8 },                         // 0x1f
-	{ "CB NOP", 2, 8 },                           // 0x20
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x21
-	{ "CB LD (BC), A", 2, 8 },               // 0x22
-	{ "CB INC BC", 2, 8 },                     // 0x23
-	{ "CB INC B", 2, 8 },                       // 0x24
-	{ "CB DEC B", 2, 8 },                       // 0x25
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x26
-	{ "CB RLCA", 2, 8 },                         // 0x27
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x28
-	{ "CB ADD HL, BC", 2, 8 },              // 0x29
-	{ "CB LD A, (BC)", 2, 8 },               // 0x2a
-	{ "CB DEC BC", 2, 8 },                     // 0x2b
-	{ "CB INC C", 2, 8 },                       // 0x2c
-	{ "CB DEC C", 2, 8 },                       // 0x2d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x2e
-	{ "CB RRCA", 2, 8 },                         // 0x2f
-	{ "CB NOP", 2, 8 },                           // 0x30
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x31
-	{ "CB LD (BC), A", 2, 8 },               // 0x32
-	{ "CB INC BC", 2, 8 },                     // 0x33
-	{ "CB INC B", 2, 8 },                       // 0x34
-	{ "CB DEC B", 2, 8 },                       // 0x35
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x36
-	{ "CB RLCA", 2, 8 },                         // 0x37
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x38
-	{ "CB ADD HL, BC", 2, 8 },              // 0x39
-	{ "CB LD A, (BC)", 2, 8 },               // 0x3a
-	{ "CB DEC BC", 2, 8 },                     // 0x3b
-	{ "CB INC C", 2, 8 },                       // 0x3c
-	{ "CB DEC C", 2, 8 },                       // 0x3d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x3e
-	{ "CB RRCA", 2, 8 },                         // 0x3f
-	{ "CB NOP", 2, 8 },                           // 0x40
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x41
-	{ "CB LD (BC), A", 2, 8 },               // 0x42
-	{ "CB INC BC", 2, 8 },                     // 0x43
-	{ "CB INC B", 2, 8 },                       // 0x44
-	{ "CB DEC B", 2, 8 },                       // 0x45
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x46
-	{ "CB RLCA", 2, 8 },                         // 0x47
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x48
-	{ "CB ADD HL, BC", 2, 8 },              // 0x49
-	{ "CB LD A, (BC)", 2, 8 },               // 0x4a
-	{ "CB DEC BC", 2, 8 },                     // 0x4b
-	{ "CB INC C", 2, 8 },                       // 0x4c
-	{ "CB DEC C", 2, 8 },                       // 0x4d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x4e
-	{ "CB RRCA", 2, 8 },                         // 0x4f
-	{ "CB NOP", 2, 8 },                           // 0x50
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x51
-	{ "CB LD (BC), A", 2, 8 },               // 0x52
-	{ "CB INC BC", 2, 8 },                     // 0x53
-	{ "CB INC B", 2, 8 },                       // 0x54
-	{ "CB DEC B", 2, 8 },                       // 0x55
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x56
-	{ "CB RLCA", 2, 8 },                         // 0x57
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x58
-	{ "CB ADD HL, BC", 2, 8 },              // 0x59
-	{ "CB LD A, (BC)", 2, 8 },               // 0x5a
-	{ "CB DEC BC", 2, 8 },                     // 0x5b
-	{ "CB INC C", 2, 8 },                       // 0x5c
-	{ "CB DEC C", 2, 8 },                       // 0x5d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x5e
-	{ "CB RRCA", 2, 8 },                         // 0x5f
-	{ "CB NOP", 2, 8 },                           // 0x60
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x61
-	{ "CB LD (BC), A", 2, 8 },               // 0x62
-	{ "CB INC BC", 2, 8 },                     // 0x63
-	{ "CB INC B", 2, 8 },                       // 0x64
-	{ "CB DEC B", 2, 8 },                       // 0x65
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x66
-	{ "CB RLCA", 2, 8 },                         // 0x67
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x68
-	{ "CB ADD HL, BC", 2, 8 },              // 0x69
-	{ "CB LD A, (BC)", 2, 8 },               // 0x6a
-	{ "CB DEC BC", 2, 8 },                     // 0x6b
-	{ "CB INC C", 2, 8 },                       // 0x6c
-	{ "CB DEC C", 2, 8 },                       // 0x6d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x6e
-	{ "CB RRCA", 2, 8 },                         // 0x6f
-	{ "CB NOP", 2, 8 },                           // 0x70
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x71
-	{ "CB LD (BC), A", 2, 8 },               // 0x72
-	{ "CB INC BC", 2, 8 },                     // 0x73
-	{ "CB INC B", 2, 8 },                       // 0x74
-	{ "CB DEC B", 2, 8 },                       // 0x75
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x76
-	{ "CB RLCA", 2, 8 },                         // 0x77
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x78
-	{ "CB ADD HL, BC", 2, 8 },              // 0x79
-	{ "CB LD A, (BC)", 2, 8 },               // 0x7a
-	{ "CB DEC BC", 2, 8 },                     // 0x7b
-	{ "CB INC C", 2, 8 },                       // 0x7c
-	{ "CB DEC C", 2, 8 },                       // 0x7d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x7e
-	{ "CB RRCA", 2, 8 },                         // 0x7f
-	{ "CB NOP", 2, 8 },                           // 0x80
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x81
-	{ "CB LD (BC), A", 2, 8 },               // 0x82
-	{ "CB INC BC", 2, 8 },                     // 0x83
-	{ "CB INC B", 2, 8 },                       // 0x84
-	{ "CB DEC B", 2, 8 },                       // 0x85
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x86
-	{ "CB RLCA", 2, 8 },                         // 0x87
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x88
-	{ "CB ADD HL, BC", 2, 8 },              // 0x89
-	{ "CB LD A, (BC)", 2, 8 },               // 0x8a
-	{ "CB DEC BC", 2, 8 },                     // 0x8b
-	{ "CB INC C", 2, 8 },                       // 0x8c
-	{ "CB DEC C", 2, 8 },                       // 0x8d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x8e
-	{ "CB RRCA", 2, 8 },                         // 0x8f
-	{ "CB NOP", 2, 8 },                           // 0x90
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0x91
-	{ "CB LD (BC), A", 2, 8 },               // 0x92
-	{ "CB INC BC", 2, 8 },                     // 0x93
-	{ "CB INC B", 2, 8 },                       // 0x94
-	{ "CB DEC B", 2, 8 },                       // 0x95
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0x96
-	{ "CB RLCA", 2, 8 },                         // 0x97
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0x98
-	{ "CB ADD HL, BC", 2, 8 },              // 0x99
-	{ "CB LD A, (BC)", 2, 8 },               // 0x9a
-	{ "CB DEC BC", 2, 8 },                     // 0x9b
-	{ "CB INC C", 2, 8 },                       // 0x9c
-	{ "CB DEC C", 2, 8 },                       // 0x9d
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0x9e
-	{ "CB RRCA", 2, 8 },                         // 0x9f
-	{ "CB NOP", 2, 8 },                           // 0xa0
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0xa1
-	{ "CB LD (BC), A", 2, 8 },               // 0xa2
-	{ "CB INC BC", 2, 8 },                     // 0xa3
-	{ "CB INC B", 2, 8 },                       // 0xa4
-	{ "CB DEC B", 2, 8 },                       // 0xa5
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0xa6
-	{ "CB RLCA", 2, 8 },                         // 0xa7
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0xa8
-	{ "CB ADD HL, BC", 2, 8 },              // 0xa9
-	{ "CB LD A, (BC)", 2, 8 },               // 0xaa
-	{ "CB DEC BC", 2, 8 },                     // 0xab
-	{ "CB INC C", 2, 8 },                       // 0xac
-	{ "CB DEC C", 2, 8 },                       // 0xad
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0xae
-	{ "CB RRCA", 2, 8 },                         // 0xaf
-	{ "CB NOP", 2, 8 },                           // 0xb0
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0xb1
-	{ "CB LD (BC), A", 2, 8 },               // 0xb2
-	{ "CB INC BC", 2, 8 },                     // 0xb3
-	{ "CB INC B", 2, 8 },                       // 0xb4
-	{ "CB DEC B", 2, 8 },                       // 0xb5
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0xb6
-	{ "CB RLCA", 2, 8 },                         // 0xb7
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0xb8
-	{ "CB ADD HL, BC", 2, 8 },              // 0xb9
-	{ "CB LD A, (BC)", 2, 8 },               // 0xba
-	{ "CB DEC BC", 2, 8 },                     // 0xbb
-	{ "CB INC C", 2, 8 },                       // 0xbc
-	{ "CB DEC C", 2, 8 },                       // 0xbd
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0xbe
-	{ "CB RRCA", 2, 8 },                         // 0xbf
-	{ "CB NOP", 2, 8 },                           // 0xc0
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0xc1
-	{ "CB LD (BC), A", 2, 8 },               // 0xc2
-	{ "CB INC BC", 2, 8 },                     // 0xc3
-	{ "CB INC B", 2, 8 },                       // 0xc4
-	{ "CB DEC B", 2, 8 },                       // 0xc5
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0xc6
-	{ "CB RLCA", 2, 8 },                         // 0xc7
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0xc8
-	{ "CB ADD HL, BC", 2, 8 },              // 0xc9
-	{ "CB LD A, (BC)", 2, 8 },               // 0xca
-	{ "CB DEC BC", 2, 8 },                     // 0xcb
-	{ "CB INC C", 2, 8 },                       // 0xcc
-	{ "CB DEC C", 2, 8 },                       // 0xcd
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0xce
-	{ "CB RRCA", 2, 8 },                         // 0xcf
-	{ "CB NOP", 2, 8 },                           // 0xd0
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0xd1
-	{ "CB LD (BC), A", 2, 8 },               // 0xd2
-	{ "CB INC BC", 2, 8 },                     // 0xd3
-	{ "CB INC B", 2, 8 },                       // 0xd4
-	{ "CB DEC B", 2, 8 },                       // 0xd5
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0xd6
-	{ "CB RLCA", 2, 8 },                         // 0xd7
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0xd8
-	{ "CB ADD HL, BC", 2, 8 },              // 0xd9
-	{ "CB LD A, (BC)", 2, 8 },               // 0xda
-	{ "CB DEC BC", 2, 8 },                     // 0xdb
-	{ "CB INC C", 2, 8 },                       // 0xdc
-	{ "CB DEC C", 2, 8 },                       // 0xdd
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0xde
-	{ "CB RRCA", 2, 8 },                         // 0xdf
-	{ "CB NOP", 2, 8 },                           // 0xe0
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0xe1
-	{ "CB LD (BC), A", 2, 8 },               // 0xe2
-	{ "CB INC BC", 2, 8 },                     // 0xe3
-	{ "CB INC B", 2, 8 },                       // 0xe4
-	{ "CB DEC B", 2, 8 },                       // 0xe5
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0xe6
-	{ "CB RLCA", 2, 8 },                         // 0xe7
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0xe8
-	{ "CB ADD HL, BC", 2, 8 },              // 0xe9
-	{ "CB LD A, (BC)", 2, 8 },               // 0xea
-	{ "CB DEC BC", 2, 8 },                     // 0xeb
-	{ "CB INC C", 2, 8 },                       // 0xec
-	{ "CB DEC C", 2, 8 },                       // 0xed
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0xee
-	{ "CB RRCA", 2, 8 },                         // 0xef
-	{ "CB NOP", 2, 8 },                           // 0xf0
-	{ "CB LD BC, 0x%04X", 2, 8 },            // 0xf1
-	{ "CB LD (BC), A", 2, 8 },               // 0xf2
-	{ "CB INC BC", 2, 8 },                     // 0xf3
-	{ "CB INC B", 2, 8 },                       // 0xf4
-	{ "CB DEC B", 2, 8 },                       // 0xf5
-	{ "CB LD B, 0x%02X", 2, 16 },               // 0xf6
-	{ "CB RLCA", 2, 8 },                         // 0xf7
-	{ "CB LD (0x%04X), SP", 2, 8 },         // 0xf8
-	{ "CB ADD HL, BC", 2, 8 },              // 0xf9
-	{ "CB LD A, (BC)", 2, 8 },               // 0xfa
-	{ "CB DEC BC", 2, 8 },                     // 0xfb
-	{ "CB INC C", 2, 8 },                       // 0xfc
-	{ "CB DEC C", 2, 8 },                       // 0xfd
-	{ "CB LD C, 0x%02X", 2, 16 },               // 0xfe
-	{ "CB RRCA", 2, 8 },                         // 0xff
+	{ "CB NOP", 0, 8 },                           // 0x00
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x01
+	{ "CB LD (BC), A", 0, 8 },               // 0x02
+	{ "CB INC BC", 0, 8 },                     // 0x03
+	{ "CB INC B", 0, 8 },                       // 0x04
+	{ "CB DEC B", 0, 8 },                       // 0x05
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x06
+	{ "CB RLCA", 0, 8 },                         // 0x07
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x08
+	{ "CB ADD HL, BC", 0, 8 },              // 0x09
+	{ "CB LD A, (BC)", 0, 8 },               // 0x0a
+	{ "CB DEC BC", 0, 8 },                     // 0x0b
+	{ "CB INC C", 0, 8 },                       // 0x0c
+	{ "CB DEC C", 0, 8 },                       // 0x0d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x0e
+	{ "CB RRCA", 0, 8 },                         // 0x0f
+	{ "CB NOP", 0, 8 },                           // 0x10
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x11
+	{ "CB LD (BC), A", 0, 8 },               // 0x12
+	{ "CB INC BC", 0, 8 },                     // 0x13
+	{ "CB INC B", 0, 8 },                       // 0x14
+	{ "CB DEC B", 0, 8 },                       // 0x15
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x16
+	{ "CB RLCA", 0, 8 },                         // 0x17
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x18
+	{ "CB ADD HL, BC", 0, 8 },              // 0x19
+	{ "CB LD A, (BC)", 0, 8 },               // 0x1a
+	{ "CB DEC BC", 0, 8 },                     // 0x1b
+	{ "CB INC C", 0, 8 },                       // 0x1c
+	{ "CB DEC C", 0, 8 },                       // 0x1d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x1e
+	{ "CB RRCA", 0, 8 },                         // 0x1f
+	{ "CB NOP", 0, 8 },                           // 0x20
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x21
+	{ "CB LD (BC), A", 0, 8 },               // 0x22
+	{ "CB INC BC", 0, 8 },                     // 0x23
+	{ "CB INC B", 0, 8 },                       // 0x24
+	{ "CB DEC B", 0, 8 },                       // 0x25
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x26
+	{ "CB RLCA", 0, 8 },                         // 0x27
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x28
+	{ "CB ADD HL, BC", 0, 8 },              // 0x29
+	{ "CB LD A, (BC)", 0, 8 },               // 0x2a
+	{ "CB DEC BC", 0, 8 },                     // 0x2b
+	{ "CB INC C", 0, 8 },                       // 0x2c
+	{ "CB DEC C", 0, 8 },                       // 0x2d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x2e
+	{ "CB RRCA", 0, 8 },                         // 0x2f
+	{ "CB NOP", 0, 8 },                           // 0x30
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x31
+	{ "CB LD (BC), A", 0, 8 },               // 0x32
+	{ "CB INC BC", 0, 8 },                     // 0x33
+	{ "CB INC B", 0, 8 },                       // 0x34
+	{ "CB DEC B", 0, 8 },                       // 0x35
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x36
+	{ "CB RLCA", 0, 8 },                         // 0x37
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x38
+	{ "CB ADD HL, BC", 0, 8 },              // 0x39
+	{ "CB LD A, (BC)", 0, 8 },               // 0x3a
+	{ "CB DEC BC", 0, 8 },                     // 0x3b
+	{ "CB INC C", 0, 8 },                       // 0x3c
+	{ "CB DEC C", 0, 8 },                       // 0x3d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x3e
+	{ "CB RRCA", 0, 8 },                         // 0x3f
+	{ "CB NOP", 0, 8 },                           // 0x40
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x41
+	{ "CB LD (BC), A", 0, 8 },               // 0x42
+	{ "CB INC BC", 0, 8 },                     // 0x43
+	{ "CB INC B", 0, 8 },                       // 0x44
+	{ "CB DEC B", 0, 8 },                       // 0x45
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x46
+	{ "CB RLCA", 0, 8 },                         // 0x47
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x48
+	{ "CB ADD HL, BC", 0, 8 },              // 0x49
+	{ "CB LD A, (BC)", 0, 8 },               // 0x4a
+	{ "CB DEC BC", 0, 8 },                     // 0x4b
+	{ "CB INC C", 0, 8 },                       // 0x4c
+	{ "CB DEC C", 0, 8 },                       // 0x4d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x4e
+	{ "CB RRCA", 0, 8 },                         // 0x4f
+	{ "CB NOP", 0, 8 },                           // 0x50
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x51
+	{ "CB LD (BC), A", 0, 8 },               // 0x52
+	{ "CB INC BC", 0, 8 },                     // 0x53
+	{ "CB INC B", 0, 8 },                       // 0x54
+	{ "CB DEC B", 0, 8 },                       // 0x55
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x56
+	{ "CB RLCA", 0, 8 },                         // 0x57
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x58
+	{ "CB ADD HL, BC", 0, 8 },              // 0x59
+	{ "CB LD A, (BC)", 0, 8 },               // 0x5a
+	{ "CB DEC BC", 0, 8 },                     // 0x5b
+	{ "CB INC C", 0, 8 },                       // 0x5c
+	{ "CB DEC C", 0, 8 },                       // 0x5d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x5e
+	{ "CB RRCA", 0, 8 },                         // 0x5f
+	{ "CB NOP", 0, 8 },                           // 0x60
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x61
+	{ "CB LD (BC), A", 0, 8 },               // 0x62
+	{ "CB INC BC", 0, 8 },                     // 0x63
+	{ "CB INC B", 0, 8 },                       // 0x64
+	{ "CB DEC B", 0, 8 },                       // 0x65
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x66
+	{ "CB RLCA", 0, 8 },                         // 0x67
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x68
+	{ "CB ADD HL, BC", 0, 8 },              // 0x69
+	{ "CB LD A, (BC)", 0, 8 },               // 0x6a
+	{ "CB DEC BC", 0, 8 },                     // 0x6b
+	{ "CB INC C", 0, 8 },                       // 0x6c
+	{ "CB DEC C", 0, 8 },                       // 0x6d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x6e
+	{ "CB RRCA", 0, 8 },                         // 0x6f
+	{ "CB NOP", 0, 8 },                           // 0x70
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x71
+	{ "CB LD (BC), A", 0, 8 },               // 0x72
+	{ "CB INC BC", 0, 8 },                     // 0x73
+	{ "CB INC B", 0, 8 },                       // 0x74
+	{ "CB DEC B", 0, 8 },                       // 0x75
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x76
+	{ "CB RLCA", 0, 8 },                         // 0x77
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x78
+	{ "CB ADD HL, BC", 0, 8 },              // 0x79
+	{ "CB LD A, (BC)", 0, 8 },               // 0x7a
+	{ "CB DEC BC", 0, 8 },                     // 0x7b
+	{ "CB INC C", 0, 8 },                       // 0x7c
+	{ "CB DEC C", 0, 8 },                       // 0x7d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x7e
+	{ "CB RRCA", 0, 8 },                         // 0x7f
+	{ "CB NOP", 0, 8 },                           // 0x80
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x81
+	{ "CB LD (BC), A", 0, 8 },               // 0x82
+	{ "CB INC BC", 0, 8 },                     // 0x83
+	{ "CB INC B", 0, 8 },                       // 0x84
+	{ "CB DEC B", 0, 8 },                       // 0x85
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x86
+	{ "CB RLCA", 0, 8 },                         // 0x87
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x88
+	{ "CB ADD HL, BC", 0, 8 },              // 0x89
+	{ "CB LD A, (BC)", 0, 8 },               // 0x8a
+	{ "CB DEC BC", 0, 8 },                     // 0x8b
+	{ "CB INC C", 0, 8 },                       // 0x8c
+	{ "CB DEC C", 0, 8 },                       // 0x8d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x8e
+	{ "CB RRCA", 0, 8 },                         // 0x8f
+	{ "CB NOP", 0, 8 },                           // 0x90
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0x91
+	{ "CB LD (BC), A", 0, 8 },               // 0x92
+	{ "CB INC BC", 0, 8 },                     // 0x93
+	{ "CB INC B", 0, 8 },                       // 0x94
+	{ "CB DEC B", 0, 8 },                       // 0x95
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0x96
+	{ "CB RLCA", 0, 8 },                         // 0x97
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0x98
+	{ "CB ADD HL, BC", 0, 8 },              // 0x99
+	{ "CB LD A, (BC)", 0, 8 },               // 0x9a
+	{ "CB DEC BC", 0, 8 },                     // 0x9b
+	{ "CB INC C", 0, 8 },                       // 0x9c
+	{ "CB DEC C", 0, 8 },                       // 0x9d
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0x9e
+	{ "CB RRCA", 0, 8 },                         // 0x9f
+	{ "CB NOP", 0, 8 },                           // 0xa0
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0xa1
+	{ "CB LD (BC), A", 0, 8 },               // 0xa2
+	{ "CB INC BC", 0, 8 },                     // 0xa3
+	{ "CB INC B", 0, 8 },                       // 0xa4
+	{ "CB DEC B", 0, 8 },                       // 0xa5
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0xa6
+	{ "CB RLCA", 0, 8 },                         // 0xa7
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0xa8
+	{ "CB ADD HL, BC", 0, 8 },              // 0xa9
+	{ "CB LD A, (BC)", 0, 8 },               // 0xaa
+	{ "CB DEC BC", 0, 8 },                     // 0xab
+	{ "CB INC C", 0, 8 },                       // 0xac
+	{ "CB DEC C", 0, 8 },                       // 0xad
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0xae
+	{ "CB RRCA", 0, 8 },                         // 0xaf
+	{ "CB NOP", 0, 8 },                           // 0xb0
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0xb1
+	{ "CB LD (BC), A", 0, 8 },               // 0xb2
+	{ "CB INC BC", 0, 8 },                     // 0xb3
+	{ "CB INC B", 0, 8 },                       // 0xb4
+	{ "CB DEC B", 0, 8 },                       // 0xb5
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0xb6
+	{ "CB RLCA", 0, 8 },                         // 0xb7
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0xb8
+	{ "CB ADD HL, BC", 0, 8 },              // 0xb9
+	{ "CB LD A, (BC)", 0, 8 },               // 0xba
+	{ "CB DEC BC", 0, 8 },                     // 0xbb
+	{ "CB INC C", 0, 8 },                       // 0xbc
+	{ "CB DEC C", 0, 8 },                       // 0xbd
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0xbe
+	{ "CB RRCA", 0, 8 },                         // 0xbf
+	{ "CB NOP", 0, 8 },                           // 0xc0
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0xc1
+	{ "CB LD (BC), A", 0, 8 },               // 0xc2
+	{ "CB INC BC", 0, 8 },                     // 0xc3
+	{ "CB INC B", 0, 8 },                       // 0xc4
+	{ "CB DEC B", 0, 8 },                       // 0xc5
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0xc6
+	{ "CB RLCA", 0, 8 },                         // 0xc7
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0xc8
+	{ "CB ADD HL, BC", 0, 8 },              // 0xc9
+	{ "CB LD A, (BC)", 0, 8 },               // 0xca
+	{ "CB DEC BC", 0, 8 },                     // 0xcb
+	{ "CB INC C", 0, 8 },                       // 0xcc
+	{ "CB DEC C", 0, 8 },                       // 0xcd
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0xce
+	{ "CB RRCA", 0, 8 },                         // 0xcf
+	{ "CB NOP", 0, 8 },                           // 0xd0
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0xd1
+	{ "CB LD (BC), A", 0, 8 },               // 0xd2
+	{ "CB INC BC", 0, 8 },                     // 0xd3
+	{ "CB INC B", 0, 8 },                       // 0xd4
+	{ "CB DEC B", 0, 8 },                       // 0xd5
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0xd6
+	{ "CB RLCA", 0, 8 },                         // 0xd7
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0xd8
+	{ "CB ADD HL, BC", 0, 8 },              // 0xd9
+	{ "CB LD A, (BC)", 0, 8 },               // 0xda
+	{ "CB DEC BC", 0, 8 },                     // 0xdb
+	{ "CB INC C", 0, 8 },                       // 0xdc
+	{ "CB DEC C", 0, 8 },                       // 0xdd
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0xde
+	{ "CB RRCA", 0, 8 },                         // 0xdf
+	{ "CB NOP", 0, 8 },                           // 0xe0
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0xe1
+	{ "CB LD (BC), A", 0, 8 },               // 0xe2
+	{ "CB INC BC", 0, 8 },                     // 0xe3
+	{ "CB INC B", 0, 8 },                       // 0xe4
+	{ "CB DEC B", 0, 8 },                       // 0xe5
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0xe6
+	{ "CB RLCA", 0, 8 },                         // 0xe7
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0xe8
+	{ "CB ADD HL, BC", 0, 8 },              // 0xe9
+	{ "CB LD A, (BC)", 0, 8 },               // 0xea
+	{ "CB DEC BC", 0, 8 },                     // 0xeb
+	{ "CB INC C", 0, 8 },                       // 0xec
+	{ "CB DEC C", 0, 8 },                       // 0xed
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0xee
+	{ "CB RRCA", 0, 8 },                         // 0xef
+	{ "CB NOP", 0, 8 },                           // 0xf0
+	{ "CB LD BC, 0x%04X", 0, 8 },            // 0xf1
+	{ "CB LD (BC), A", 0, 8 },               // 0xf2
+	{ "CB INC BC", 0, 8 },                     // 0xf3
+	{ "CB INC B", 0, 8 },                       // 0xf4
+	{ "CB DEC B", 0, 8 },                       // 0xf5
+	{ "CB LD B, 0x%02X", 0, 16 },               // 0xf6
+	{ "CB RLCA", 0, 8 },                         // 0xf7
+	{ "CB LD (0x%04X), SP", 0, 8 },         // 0xf8
+	{ "CB ADD HL, BC", 0, 8 },              // 0xf9
+	{ "CB LD A, (BC)", 0, 8 },               // 0xfa
+	{ "CB DEC BC", 0, 8 },                     // 0xfb
+	{ "CB INC C", 0, 8 },                       // 0xfc
+	{ "CB DEC C", 0, 8 },                       // 0xfd
+	{ "CB LD C, 0x%02X", 0, 16 },               // 0xfe
+	{ "CB RRCA", 0, 8 },                         // 0xff
 ];
