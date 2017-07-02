@@ -7,39 +7,30 @@ import memory;
 import numeric_alias;
 import ppu;
 import cpu;
+import bitop;
 
 struct Emu {
 public:
+    void Reset()
+    {
+        mem.Reset();
+    }
+
+    void SetRenderDelegate(void delegate(const u8[]) render)
+    {
+        ppu.SetRenderDelegate(render);
+    }
+    
     void Frame() 
     {
         cpu.CycleCount = 0;
         CpuStep();
         Interrupt();
-        ppu.Step(cpu.CycleCount);
-    }
-
-    static string GenSwitch(string opcode, string operand)
-    {
-        import std.format;
-        string gen = "switch(" ~ opcode ~ ") {";
-        foreach(idx; 0..255) {
-            immutable string idx_str = format!"%02X"(idx);
-            gen ~= "case 0x" ~ idx_str ~ ":";
-            gen ~= "opcode_" ~ idx_str ~ "(" ~ operand ~ ");";
-            gen ~= "break;";
-        }
-        gen ~= "default: assert(false);";
-        gen ~= "}";
-        return gen;
+        ppu.Step(cpu.CycleCount, mem);
     }
 
     void CpuStep() {
         const u8 opcode = mem.readU8(cpu.PC);
-        {
-            import std.stdio;
-            import std.format;
-            writeln(format!"ROM0:%04X %02X State: AF%04X BC%04X DE%04X HL%04X SP%04X"(cpu.PC, opcode, cpu.AF, cpu.BC, cpu.DE, cpu.HL, cpu.SP));
-        }
         cpu.PC++;
         immutable instruction ins = instruction_table[opcode];
         u16 operand;
@@ -52,8 +43,41 @@ public:
     }
 
     void CpuExec(const u8 opcode, const u16 operand, immutable instruction ins) {
+        {
+            import std.stdio;
+            import std.format;
+            const u16 PC = cast(u16)(cpu.PC - 1);
+            write(format!"ROM0:%04X %02X "(PC, opcode));
+            if(0 == ins.length)
+                write("      ");
+            else if(1 == ins.length)
+                write(format!"%02X    "(cast(u8)operand));
+            else
+                write(format!"%02X %02X "(cast(u8)operand, cast(u8)(operand >> 8)));
+            writeln(format!"State: AF%04X BC%04X DE%04X HL%04X SP%04X"(cpu.AF, cpu.BC, cpu.DE, cpu.HL, cpu.SP));
+            if(PC == 0x2B8)
+            {
+                writeln("HALT");
+            }
+        }
         cpu.PC += ins.length;
-        cpu.CycleCount += ins.cycle;
+        cpu.CycleCount += ins.cycle * 2;
+
+        string GenSwitch(string opcode, string operand)
+        {
+            import std.format;
+            string gen = "switch(" ~ opcode ~ ") {";
+            foreach(idx; 0..255) {
+                immutable string idx_str = format!"%02X"(idx);
+                gen ~= "case 0x" ~ idx_str ~ ":";
+                gen ~= "opcode_" ~ idx_str ~ "(" ~ operand ~ ");";
+                gen ~= "break;";
+            }
+            gen ~= "default: assert(false);";
+            gen ~= "}";
+            return gen;
+        }
+
         mixin(GenSwitch("opcode", "operand"));
     }
 
@@ -94,6 +118,30 @@ public:
     }
 
 private:
+    // prefix CB
+    void opcode_CB(const u16 operand) { 
+        const u8 cb_opcode = cast(u8)(0xFF & operand);
+        immutable instruction ins = cb_instruction_table[cb_opcode];
+        cpu.PC += ins.length;
+        cpu.CycleCount += ins.cycle;
+
+        string GenSwitch(string opcode, string operand)
+        {
+            import std.format;
+            string gen = "switch(" ~ opcode ~ ") {";
+            foreach(idx; 0..255) {
+                immutable string idx_str = format!"%02X"(idx);
+                gen ~= "case 0x" ~ idx_str ~ ":";
+                gen ~= "opcode_cb_" ~ idx_str ~ "(" ~ operand ~ ");";
+                gen ~= "break;";
+            }
+            gen ~= "default: assert(false);";
+            gen ~= "}";
+            return gen;
+        }
+
+        mixin(GenSwitch("cb_opcode", "operand"));
+    }
     // 8 bit load
     // LD nn,n
     void opcode_06(const u16 operand) {
@@ -328,7 +376,7 @@ private:
         cpu.HL = cpu.A;
     }
     void opcode_EA(const u16 operand) {
-        assert(false); // todo implement
+        mem.writeU8(operand, cpu.A);
     }
     // LD A,C
     void opcode_F2(const u16 operand) {
@@ -886,6 +934,9 @@ private:
     }
     // Miscellaneous
     void swap(ref u8 destination) {
+        u8 high = destination & 0xF0;
+        u8 low = destination & 0x0F;
+        destination = cast(u8)((low << 0x4) | (high >> 0x4));
         if(0 == destination)
             cpu.FlagZ = 1;
         else
@@ -893,12 +944,24 @@ private:
         cpu.FlagN = 0;
         cpu.FlagH = 0;
         cpu.FlagC = 0;
-        assert(false);
     }
+    // SWAP n
+    void opcode_cb_37(const u16 operand) { swap(cpu.A); }
+    void opcode_cb_30(const u16 operand) { swap(cpu.B); }
+    void opcode_cb_31(const u16 operand) { swap(cpu.C); }
+    void opcode_cb_32(const u16 operand) { swap(cpu.D); }
+    void opcode_cb_33(const u16 operand) { swap(cpu.E); }
+    void opcode_cb_34(const u16 operand) { swap(cpu.H); }
+    void opcode_cb_35(const u16 operand) { swap(cpu.L); }
+    void opcode_cb_36(const u16 operand) { swap(cpu.L); }
     // DAA
     void opcode_27(const u16 operand) { assert(false); }
     // CPL
-    void opcode_2F(const u16 operand) { assert(false); }
+    void opcode_2F(const u16 operand) { 
+        cpu.A = ~cpu.A;
+        cpu.FlagN = 1;
+        cpu.FlagH = 1;
+    }
     // CCF
     void opcode_3F(const u16 operand) { assert(false); }
     // SCF
@@ -922,6 +985,279 @@ private:
     void opcode_17(const u16 operand) { assert(false); }
     void opcode_0F(const u16 operand) { assert(false); }
     void opcode_1F(const u16 operand) { assert(false); }
+    // RLC n
+    void opcode_cb_07(const u16 operand) { assert(false); }
+    void opcode_cb_00(const u16 operand) { assert(false); }
+    void opcode_cb_01(const u16 operand) { assert(false); }
+    void opcode_cb_02(const u16 operand) { assert(false); }
+    void opcode_cb_03(const u16 operand) { assert(false); }
+    void opcode_cb_04(const u16 operand) { assert(false); }
+    void opcode_cb_05(const u16 operand) { assert(false); }
+    void opcode_cb_06(const u16 operand) { assert(false); }
+    // RL n
+    void opcode_cb_17(const u16 operand) { assert(false); }
+    void opcode_cb_10(const u16 operand) { assert(false); }
+    void opcode_cb_11(const u16 operand) { assert(false); }
+    void opcode_cb_12(const u16 operand) { assert(false); }
+    void opcode_cb_13(const u16 operand) { assert(false); }
+    void opcode_cb_14(const u16 operand) { assert(false); }
+    void opcode_cb_15(const u16 operand) { assert(false); }
+    void opcode_cb_16(const u16 operand) { assert(false); }
+    // RRC n
+    void opcode_cb_0F(const u16 operand) { assert(false); }
+    void opcode_cb_08(const u16 operand) { assert(false); }
+    void opcode_cb_09(const u16 operand) { assert(false); }
+    void opcode_cb_0A(const u16 operand) { assert(false); }
+    void opcode_cb_0B(const u16 operand) { assert(false); }
+    void opcode_cb_0C(const u16 operand) { assert(false); }
+    void opcode_cb_0D(const u16 operand) { assert(false); }
+    void opcode_cb_0E(const u16 operand) { assert(false); }
+    // RR n
+    void opcode_cb_1F(const u16 operand) { assert(false); }
+    void opcode_cb_18(const u16 operand) { assert(false); }
+    void opcode_cb_19(const u16 operand) { assert(false); }
+    void opcode_cb_1A(const u16 operand) { assert(false); }
+    void opcode_cb_1B(const u16 operand) { assert(false); }
+    void opcode_cb_1C(const u16 operand) { assert(false); }
+    void opcode_cb_1D(const u16 operand) { assert(false); }
+    void opcode_cb_1E(const u16 operand) { assert(false); }
+    // SLA n
+    void opcode_cb_27(const u16 operand) { assert(false); }
+    void opcode_cb_20(const u16 operand) { assert(false); }
+    void opcode_cb_21(const u16 operand) { assert(false); }
+    void opcode_cb_22(const u16 operand) { assert(false); }
+    void opcode_cb_23(const u16 operand) { assert(false); }
+    void opcode_cb_24(const u16 operand) { assert(false); }
+    void opcode_cb_25(const u16 operand) { assert(false); }
+    void opcode_cb_26(const u16 operand) { assert(false); }
+    // SRA n
+    void opcode_cb_2F(const u16 operand) { assert(false); }
+    void opcode_cb_28(const u16 operand) { assert(false); }
+    void opcode_cb_29(const u16 operand) { assert(false); }
+    void opcode_cb_2A(const u16 operand) { assert(false); }
+    void opcode_cb_2B(const u16 operand) { assert(false); }
+    void opcode_cb_2C(const u16 operand) { assert(false); }
+    void opcode_cb_2D(const u16 operand) { assert(false); }
+    void opcode_cb_2E(const u16 operand) { assert(false); }
+    // SRL n
+    void opcode_cb_3F(const u16 operand) { assert(false); }
+    void opcode_cb_38(const u16 operand) { assert(false); }
+    void opcode_cb_39(const u16 operand) { assert(false); }
+    void opcode_cb_3A(const u16 operand) { assert(false); }
+    void opcode_cb_3B(const u16 operand) { assert(false); }
+    void opcode_cb_3C(const u16 operand) { assert(false); }
+    void opcode_cb_3D(const u16 operand) { assert(false); }
+    void opcode_cb_3E(const u16 operand) { assert(false); }
+    // Bit Opcodes
+    void bittest(u8 bitIndex, u8 destination) {
+        if(bitop.test(destination, bitIndex))
+            cpu.FlagZ = 0;
+        else
+            cpu.FlagZ = 1;
+        cpu.FlagN = 0;
+        cpu.FlagH = 1;
+    }
+    // BIT b,r
+    void opcode_cb_47(const u16 operand) { bittest(0, cpu.A); }
+    void opcode_cb_40(const u16 operand) { bittest(0, cpu.B); }
+    void opcode_cb_41(const u16 operand) { bittest(0, cpu.C); }
+    void opcode_cb_42(const u16 operand) { bittest(0, cpu.D); }
+    void opcode_cb_43(const u16 operand) { bittest(0, cpu.E); }
+    void opcode_cb_44(const u16 operand) { bittest(0, cpu.H); }
+    void opcode_cb_45(const u16 operand) { bittest(0, cpu.L); }
+    void opcode_cb_46(const u16 operand) { bittest(0, cast(u8)cpu.HL); }
+    void opcode_cb_4F(const u16 operand) { bittest(1, cpu.A); }
+    void opcode_cb_48(const u16 operand) { bittest(1, cpu.B); }
+    void opcode_cb_49(const u16 operand) { bittest(1, cpu.C); }
+    void opcode_cb_4A(const u16 operand) { bittest(1, cpu.D); }
+    void opcode_cb_4B(const u16 operand) { bittest(1, cpu.E); }
+    void opcode_cb_4C(const u16 operand) { bittest(1, cpu.H); }
+    void opcode_cb_4D(const u16 operand) { bittest(1, cpu.L); }
+    void opcode_cb_4E(const u16 operand) { bittest(1, cast(u8)cpu.HL); }
+    void opcode_cb_57(const u16 operand) { bittest(2, cpu.A); }
+    void opcode_cb_50(const u16 operand) { bittest(2, cpu.B); }
+    void opcode_cb_51(const u16 operand) { bittest(2, cpu.C); }
+    void opcode_cb_52(const u16 operand) { bittest(2, cpu.D); }
+    void opcode_cb_53(const u16 operand) { bittest(2, cpu.E); }
+    void opcode_cb_54(const u16 operand) { bittest(2, cpu.H); }
+    void opcode_cb_55(const u16 operand) { bittest(2, cpu.L); }
+    void opcode_cb_56(const u16 operand) { bittest(2, cast(u8)cpu.HL); }
+    void opcode_cb_5F(const u16 operand) { bittest(3, cpu.A); }
+    void opcode_cb_58(const u16 operand) { bittest(3, cpu.B); }
+    void opcode_cb_59(const u16 operand) { bittest(3, cpu.C); }
+    void opcode_cb_5A(const u16 operand) { bittest(3, cpu.D); }
+    void opcode_cb_5B(const u16 operand) { bittest(3, cpu.E); }
+    void opcode_cb_5C(const u16 operand) { bittest(3, cpu.H); }
+    void opcode_cb_5D(const u16 operand) { bittest(3, cpu.L); }
+    void opcode_cb_5E(const u16 operand) { bittest(3, cast(u8)cpu.HL); }
+    void opcode_cb_67(const u16 operand) { bittest(4, cpu.A); }
+    void opcode_cb_60(const u16 operand) { bittest(4, cpu.B); }
+    void opcode_cb_61(const u16 operand) { bittest(4, cpu.C); }
+    void opcode_cb_62(const u16 operand) { bittest(4, cpu.D); }
+    void opcode_cb_63(const u16 operand) { bittest(4, cpu.E); }
+    void opcode_cb_64(const u16 operand) { bittest(4, cpu.H); }
+    void opcode_cb_65(const u16 operand) { bittest(4, cpu.L); }
+    void opcode_cb_66(const u16 operand) { bittest(4, cast(u8)cpu.HL); }
+    void opcode_cb_6F(const u16 operand) { bittest(5, cpu.A); }
+    void opcode_cb_68(const u16 operand) { bittest(5, cpu.B); }
+    void opcode_cb_69(const u16 operand) { bittest(5, cpu.C); }
+    void opcode_cb_6A(const u16 operand) { bittest(5, cpu.D); }
+    void opcode_cb_6B(const u16 operand) { bittest(5, cpu.E); }
+    void opcode_cb_6C(const u16 operand) { bittest(5, cpu.H); }
+    void opcode_cb_6D(const u16 operand) { bittest(5, cpu.L); }
+    void opcode_cb_6E(const u16 operand) { bittest(5, cast(u8)cpu.HL); }
+    void opcode_cb_77(const u16 operand) { bittest(6, cpu.A); }
+    void opcode_cb_70(const u16 operand) { bittest(6, cpu.B); }
+    void opcode_cb_71(const u16 operand) { bittest(6, cpu.C); }
+    void opcode_cb_72(const u16 operand) { bittest(6, cpu.D); }
+    void opcode_cb_73(const u16 operand) { bittest(6, cpu.E); }
+    void opcode_cb_74(const u16 operand) { bittest(6, cpu.H); }
+    void opcode_cb_75(const u16 operand) { bittest(6, cpu.L); }
+    void opcode_cb_76(const u16 operand) { bittest(6, cast(u8)cpu.HL); }
+    void opcode_cb_7F(const u16 operand) { bittest(7, cpu.A); }
+    void opcode_cb_78(const u16 operand) { bittest(7, cpu.B); }
+    void opcode_cb_79(const u16 operand) { bittest(7, cpu.C); }
+    void opcode_cb_7A(const u16 operand) { bittest(7, cpu.D); }
+    void opcode_cb_7B(const u16 operand) { bittest(7, cpu.E); }
+    void opcode_cb_7C(const u16 operand) { bittest(7, cpu.H); }
+    void opcode_cb_7D(const u16 operand) { bittest(7, cpu.L); }
+    void opcode_cb_7E(const u16 operand) { bittest(7, cast(u8)cpu.HL); }
+    // SET b,r
+    void bitset(u8 bitIndex, ref u8 destination) {
+        destination = bitop.set(destination, bitIndex);
+    }
+    void opcode_cb_C7(const u16 operand) { bitset(0, cpu.A); }
+    void opcode_cb_C0(const u16 operand) { bitset(0, cpu.B); }
+    void opcode_cb_C1(const u16 operand) { bitset(0, cpu.C); }
+    void opcode_cb_C2(const u16 operand) { bitset(0, cpu.D); }
+    void opcode_cb_C3(const u16 operand) { bitset(0, cpu.E); }
+    void opcode_cb_C4(const u16 operand) { bitset(0, cpu.H); }
+    void opcode_cb_C5(const u16 operand) { bitset(0, cpu.L); }
+    void opcode_cb_C6(const u16 operand) { bitset(0, cpu.L); }
+    void opcode_cb_CF(const u16 operand) { bitset(1, cpu.A); }
+    void opcode_cb_C8(const u16 operand) { bitset(1, cpu.B); }
+    void opcode_cb_C9(const u16 operand) { bitset(1, cpu.C); }
+    void opcode_cb_CA(const u16 operand) { bitset(1, cpu.D); }
+    void opcode_cb_CB(const u16 operand) { bitset(1, cpu.E); }
+    void opcode_cb_CC(const u16 operand) { bitset(1, cpu.H); }
+    void opcode_cb_CD(const u16 operand) { bitset(1, cpu.L); }
+    void opcode_cb_CE(const u16 operand) { bitset(1, cpu.L); }
+    void opcode_cb_D7(const u16 operand) { bitset(2, cpu.A); }
+    void opcode_cb_D0(const u16 operand) { bitset(2, cpu.B); }
+    void opcode_cb_D1(const u16 operand) { bitset(2, cpu.C); }
+    void opcode_cb_D2(const u16 operand) { bitset(2, cpu.D); }
+    void opcode_cb_D3(const u16 operand) { bitset(2, cpu.E); }
+    void opcode_cb_D4(const u16 operand) { bitset(2, cpu.H); }
+    void opcode_cb_D5(const u16 operand) { bitset(2, cpu.L); }
+    void opcode_cb_D6(const u16 operand) { bitset(2, cpu.L); }
+    void opcode_cb_DF(const u16 operand) { bitset(3, cpu.A); }
+    void opcode_cb_D8(const u16 operand) { bitset(3, cpu.B); }
+    void opcode_cb_D9(const u16 operand) { bitset(3, cpu.C); }
+    void opcode_cb_DA(const u16 operand) { bitset(3, cpu.D); }
+    void opcode_cb_DB(const u16 operand) { bitset(3, cpu.E); }
+    void opcode_cb_DC(const u16 operand) { bitset(3, cpu.H); }
+    void opcode_cb_DD(const u16 operand) { bitset(3, cpu.L); }
+    void opcode_cb_DE(const u16 operand) { bitset(3, cpu.L); }
+    void opcode_cb_E7(const u16 operand) { bitset(4, cpu.A); }
+    void opcode_cb_E0(const u16 operand) { bitset(4, cpu.B); }
+    void opcode_cb_E1(const u16 operand) { bitset(4, cpu.C); }
+    void opcode_cb_E2(const u16 operand) { bitset(4, cpu.D); }
+    void opcode_cb_E3(const u16 operand) { bitset(4, cpu.E); }
+    void opcode_cb_E4(const u16 operand) { bitset(4, cpu.H); }
+    void opcode_cb_E5(const u16 operand) { bitset(4, cpu.L); }
+    void opcode_cb_E6(const u16 operand) { bitset(4, cpu.L); }
+    void opcode_cb_EF(const u16 operand) { bitset(5, cpu.A); }
+    void opcode_cb_E8(const u16 operand) { bitset(5, cpu.B); }
+    void opcode_cb_E9(const u16 operand) { bitset(5, cpu.C); }
+    void opcode_cb_EA(const u16 operand) { bitset(5, cpu.D); }
+    void opcode_cb_EB(const u16 operand) { bitset(5, cpu.E); }
+    void opcode_cb_EC(const u16 operand) { bitset(5, cpu.H); }
+    void opcode_cb_ED(const u16 operand) { bitset(5, cpu.L); }
+    void opcode_cb_EE(const u16 operand) { bitset(5, cpu.L); }
+    void opcode_cb_F7(const u16 operand) { bitset(6, cpu.A); }
+    void opcode_cb_F0(const u16 operand) { bitset(6, cpu.B); }
+    void opcode_cb_F1(const u16 operand) { bitset(6, cpu.C); }
+    void opcode_cb_F2(const u16 operand) { bitset(6, cpu.D); }
+    void opcode_cb_F3(const u16 operand) { bitset(6, cpu.E); }
+    void opcode_cb_F4(const u16 operand) { bitset(6, cpu.H); }
+    void opcode_cb_F5(const u16 operand) { bitset(6, cpu.L); }
+    void opcode_cb_F6(const u16 operand) { bitset(6, cpu.L); }
+    void opcode_cb_FF(const u16 operand) { bitset(7, cpu.A); }
+    void opcode_cb_F8(const u16 operand) { bitset(7, cpu.B); }
+    void opcode_cb_F9(const u16 operand) { bitset(7, cpu.C); }
+    void opcode_cb_FA(const u16 operand) { bitset(7, cpu.D); }
+    void opcode_cb_FB(const u16 operand) { bitset(7, cpu.E); }
+    void opcode_cb_FC(const u16 operand) { bitset(7, cpu.H); }
+    void opcode_cb_FD(const u16 operand) { bitset(7, cpu.L); }
+    void opcode_cb_FE(const u16 operand) { bitset(7, cpu.L); }
+    // RES b,r
+    void bitreset(u8 bitIndex, ref u8 destination) {
+        destination = bitop.reset(destination, bitIndex);
+    }
+    void opcode_cb_87(const u16 operand) { bitreset(0, cpu.A); }
+    void opcode_cb_80(const u16 operand) { bitreset(0, cpu.B); }
+    void opcode_cb_81(const u16 operand) { bitreset(0, cpu.C); }
+    void opcode_cb_82(const u16 operand) { bitreset(0, cpu.D); }
+    void opcode_cb_83(const u16 operand) { bitreset(0, cpu.E); }
+    void opcode_cb_84(const u16 operand) { bitreset(0, cpu.H); }
+    void opcode_cb_85(const u16 operand) { bitreset(0, cpu.L); }
+    void opcode_cb_86(const u16 operand) { bitreset(0, cpu.L); }
+    void opcode_cb_8F(const u16 operand) { bitreset(1, cpu.A); }
+    void opcode_cb_88(const u16 operand) { bitreset(1, cpu.B); }
+    void opcode_cb_89(const u16 operand) { bitreset(1, cpu.C); }
+    void opcode_cb_8A(const u16 operand) { bitreset(1, cpu.D); }
+    void opcode_cb_8B(const u16 operand) { bitreset(1, cpu.E); }
+    void opcode_cb_8C(const u16 operand) { bitreset(1, cpu.H); }
+    void opcode_cb_8D(const u16 operand) { bitreset(1, cpu.L); }
+    void opcode_cb_8E(const u16 operand) { bitreset(1, cpu.L); }
+    void opcode_cb_97(const u16 operand) { bitreset(2, cpu.A); }
+    void opcode_cb_90(const u16 operand) { bitreset(2, cpu.B); }
+    void opcode_cb_91(const u16 operand) { bitreset(2, cpu.C); }
+    void opcode_cb_92(const u16 operand) { bitreset(2, cpu.D); }
+    void opcode_cb_93(const u16 operand) { bitreset(2, cpu.E); }
+    void opcode_cb_94(const u16 operand) { bitreset(2, cpu.H); }
+    void opcode_cb_95(const u16 operand) { bitreset(2, cpu.L); }
+    void opcode_cb_96(const u16 operand) { bitreset(2, cpu.L); }
+    void opcode_cb_9F(const u16 operand) { bitreset(3, cpu.A); }
+    void opcode_cb_98(const u16 operand) { bitreset(3, cpu.B); }
+    void opcode_cb_99(const u16 operand) { bitreset(3, cpu.C); }
+    void opcode_cb_9A(const u16 operand) { bitreset(3, cpu.D); }
+    void opcode_cb_9B(const u16 operand) { bitreset(3, cpu.E); }
+    void opcode_cb_9C(const u16 operand) { bitreset(3, cpu.H); }
+    void opcode_cb_9D(const u16 operand) { bitreset(3, cpu.L); }
+    void opcode_cb_9E(const u16 operand) { bitreset(3, cpu.L); }
+    void opcode_cb_A7(const u16 operand) { bitreset(4, cpu.A); }
+    void opcode_cb_A0(const u16 operand) { bitreset(4, cpu.B); }
+    void opcode_cb_A1(const u16 operand) { bitreset(4, cpu.C); }
+    void opcode_cb_A2(const u16 operand) { bitreset(4, cpu.D); }
+    void opcode_cb_A3(const u16 operand) { bitreset(4, cpu.E); }
+    void opcode_cb_A4(const u16 operand) { bitreset(4, cpu.H); }
+    void opcode_cb_A5(const u16 operand) { bitreset(4, cpu.L); }
+    void opcode_cb_A6(const u16 operand) { bitreset(4, cpu.L); }
+    void opcode_cb_AF(const u16 operand) { bitreset(5, cpu.A); }
+    void opcode_cb_A8(const u16 operand) { bitreset(5, cpu.B); }
+    void opcode_cb_A9(const u16 operand) { bitreset(5, cpu.C); }
+    void opcode_cb_AA(const u16 operand) { bitreset(5, cpu.D); }
+    void opcode_cb_AB(const u16 operand) { bitreset(5, cpu.E); }
+    void opcode_cb_AC(const u16 operand) { bitreset(5, cpu.H); }
+    void opcode_cb_AD(const u16 operand) { bitreset(5, cpu.L); }
+    void opcode_cb_AE(const u16 operand) { bitreset(5, cpu.L); }
+    void opcode_cb_B7(const u16 operand) { bitreset(6, cpu.A); }
+    void opcode_cb_B0(const u16 operand) { bitreset(6, cpu.B); }
+    void opcode_cb_B1(const u16 operand) { bitreset(6, cpu.C); }
+    void opcode_cb_B2(const u16 operand) { bitreset(6, cpu.D); }
+    void opcode_cb_B3(const u16 operand) { bitreset(6, cpu.E); }
+    void opcode_cb_B4(const u16 operand) { bitreset(6, cpu.H); }
+    void opcode_cb_B5(const u16 operand) { bitreset(6, cpu.L); }
+    void opcode_cb_B6(const u16 operand) { bitreset(6, cpu.L); }
+    void opcode_cb_BF(const u16 operand) { bitreset(7, cpu.A); }
+    void opcode_cb_B8(const u16 operand) { bitreset(7, cpu.B); }
+    void opcode_cb_B9(const u16 operand) { bitreset(7, cpu.C); }
+    void opcode_cb_BA(const u16 operand) { bitreset(7, cpu.D); }
+    void opcode_cb_BB(const u16 operand) { bitreset(7, cpu.E); }
+    void opcode_cb_BC(const u16 operand) { bitreset(7, cpu.H); }
+    void opcode_cb_BD(const u16 operand) { bitreset(7, cpu.L); }
+    void opcode_cb_BE(const u16 operand) { bitreset(7, cpu.L); }
     // Jumps
     // JP nn
     void opcode_C3(const u16 operand) { 
@@ -1003,8 +1339,6 @@ private:
         opcode_FB(operand); // EI
         opcode_C9(operand); // RET
     }
-    // prefix CB
-    void opcode_CB(const u16 operand) { assert(false); }
     // illegal opcode
     void opcode_D3(const u16 operand) { assert(false); }
     void opcode_DB(const u16 operand) { assert(false); }
@@ -1017,6 +1351,12 @@ private:
     void opcode_F4(const u16 operand) { assert(false); }
     void opcode_FC(const u16 operand) { assert(false); }
     void opcode_FD(const u16 operand) { assert(false); }
+
+    //RLC n
+
+
+
+
 public:
     CPU cpu;
     PPU ppu;

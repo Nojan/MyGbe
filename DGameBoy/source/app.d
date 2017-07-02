@@ -2,6 +2,7 @@
 import std.stdio;
 import derelict.sdl2.sdl;
 import emu;
+import numeric_alias;
 
 void fatal_error_if(Cond,Args...)(Cond cond, string format, Args args) {
     import std.c.stdlib;
@@ -29,6 +30,7 @@ void main(string[] args)
     fatal_error_if(window is null,"Failed to create SDL window!");
 
     auto renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
+    auto texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 144, 160);
 	
 	bool run = true;
 	Emu emu;
@@ -41,12 +43,37 @@ void main(string[] args)
         File rom = File(filename, "rb");
         immutable ulong romSize = rom.size();
         rom.rawRead(emu.MemoryCart());
-
-        emu.cpu.AF = 0x01B0;
-        emu.cpu.BC = 0x0013;
-        emu.cpu.DE = 0x00D8;
-        emu.cpu.HL = 0x014D;
+        emu.Reset();
     }
+
+    void RenderFunction(const u8[] lcd)
+    {
+        u32[144*160] pixels;
+        for(int idx = 0; idx<lcd.length; ++idx )
+        {
+            const u8 lcd_pixel = lcd[idx];
+            final switch(lcd_pixel)
+            {
+                case 0:
+                pixels[idx] = 0;
+                break;
+                case 1:
+                pixels[idx] = 0x00777777;
+                break;
+                case 2:
+                pixels[idx] = 0x00CCCCCC;
+                break;
+                case 3:
+                pixels[idx] = 0x00FFFFFF;
+                break;
+            }
+        }
+        SDL_UpdateTexture(texture, null, pixels.ptr, 160 * u32.sizeof);
+        SDL_RenderClear(renderer);
+        SDL_RenderCopy(renderer, texture, null, null);
+        SDL_RenderPresent(renderer);
+    }
+    emu.SetRenderDelegate(&RenderFunction);
 
 	while(run) {
 		SDL_Event event;
@@ -63,8 +90,6 @@ void main(string[] args)
 		}
 
 		emu.Frame();
-		
-		SDL_RenderPresent(renderer);
 	}
 
 	SDL_DestroyRenderer(renderer);
