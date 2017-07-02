@@ -2,9 +2,18 @@ import numeric_alias;
 
 struct Memory {
 
+    pure nothrow @nogc
     u8 readU8(u16 address) const { return mem[address]; }
-    void writeU8(u16 address, u8 value) { mem[address] = value; }
 
+    pure nothrow @nogc
+    void writeU8(u16 address, u8 value)
+    { 
+        if(SCNL == address)
+            value = 0;
+        mem[address] = value; 
+    }
+
+    pure nothrow @nogc
     u16 readU16(u16 address) const {
         const u16 low = readU8(address);
         const u16 high = readU8(cast(u16)(address+1));
@@ -12,6 +21,7 @@ struct Memory {
         return val; 
     }
 
+    pure nothrow @nogc
     void writeU16(u16 address, u16 value) { 
         const u8 low = (value & 0xFF00) >> 8;
         const u8 high = (value & 0xFF);
@@ -48,8 +58,10 @@ struct Memory {
         NR51 = 0xFF25,
         NR52 = 0xFF26,
         LCDC = 0xFF40,
+        LCDS = 0xFF41,
         SCY = 0xFF42,
         SCX = 0xFF43,
+        SCNL = 0xFF44,
         LYC = 0xFF45,
         BGP = 0xFF47,
         OBP0 = 0xFF48,
