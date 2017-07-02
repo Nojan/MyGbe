@@ -26,7 +26,7 @@ private:
 public:
     u16 SP = 0xFFFE;
     u16 PC = 0x100;
-    u8 CycleCount = 0;
+    i16 CycleCount = 0;
     bool IME = true;
 
     @property u16 AF() const { return rAF.val; }
