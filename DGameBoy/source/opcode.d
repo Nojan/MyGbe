@@ -24,7 +24,7 @@ immutable instruction[256] instruction_table = [
 	{ "INC C", 0, 2 },                       // 0x0c
 	{ "DEC C", 0, 2 },                       // 0x0d
 	{ "LD C, 0x%02X", 1, 4 },               // 0x0e
-	{ "RRCA", 0, 4 },                         // 0x0f
+	{ "RRCA", 0, 2 },                         // 0x0f
 	{ "STOP", 1, 2 },                         // 0x10
 	{ "LD DE, 0x%04X", 2, 6 },            // 0x11
 	{ "LD (DE), A", 0, 4 },               // 0x12
@@ -41,7 +41,7 @@ immutable instruction[256] instruction_table = [
 	{ "DEC E", 0, 2 },                       // 0x1d
 	{ "LD E, 0x%02X", 1, 4 },               // 0x1e
 	{ "RRA", 0, 4 },                           // 0x1f
-	{ "JR NZ, 0x%02X", 1, 0 },             // 0x20
+	{ "JR NZ, 0x%02X", 1, 4 },             // 0x20
 	{ "LD HL, 0x%04X", 2, 6 },            // 0x21
 	{ "LDI (HL), A", 0, 4 },             // 0x22
 	{ "INC HL", 0, 4 },                     // 0x23
@@ -49,7 +49,7 @@ immutable instruction[256] instruction_table = [
 	{ "DEC H", 0, 2 },                       // 0x25
 	{ "LD H, 0x%02X", 1, 4 },               // 0x26
 	{ "DAA", 0, 2 },                           // 0x27
-	{ "JR Z, 0x%02X", 1, 0 },               // 0x28
+	{ "JR Z, 0x%02X", 1, 4 },               // 0x28
 	{ "ADD HL, HL", 0, 4 },              // 0x29
 	{ "LDI A, (HL)", 0, 4 },             // 0x2a
 	{ "DEC HL", 0, 4 },                     // 0x2b
@@ -65,7 +65,7 @@ immutable instruction[256] instruction_table = [
 	{ "DEC (HL)", 0, 6 },                  // 0x35
 	{ "LD (HL), 0x%02X", 1, 6 },          // 0x36
 	{ "SCF", 0, 2 },                           // 0x37
-	{ "JR C, 0x%02X", 1, 0 },               // 0x38
+	{ "JR C, 0x%02X", 1, 4 },               // 0x38
 	{ "ADD HL, SP", 0, 4 },              // 0x39
 	{ "LDD A, (HL)", 0, 4 },             // 0x3a
 	{ "DEC SP", 0, 4 },                     // 0x3b
@@ -201,33 +201,33 @@ immutable instruction[256] instruction_table = [
 	{ "CP L", 0, 2 },                         // 0xbd
 	{ "CP (HL)", 0, 4 },                    // 0xbe
 	{ "CP A", 0, 2 },                         // 0xbf
-	{ "RET NZ", 0, 0 },                     // 0xc0
+	{ "RET NZ", 0, 4 },                     // 0xc0
 	{ "POP BC", 0, 6 },                     // 0xc1
-	{ "JP NZ, 0x%04X", 2, 0 },            // 0xc2
-	{ "JP 0x%04X", 2, 6 },                   // 0xc3
-	{ "CALL NZ, 0x%04X", 2, 0 },        // 0xc4
+	{ "JP NZ, 0x%04X", 2, 6 },            // 0xc2
+	{ "JP 0x%04X", 2, 8 },                   // 0xc3
+	{ "CALL NZ, 0x%04X", 2, 6 },        // 0xc4
 	{ "PUSH BC", 0, 8 },                   // 0xc5
 	{ "ADD A, 0x%02X", 1, 4 },             // 0xc6
 	{ "RST 0x00", 0, 8 },                    // 0xc7
-	{ "RET Z", 0, 0 },                       // 0xc8
-	{ "RET", 0, 2 },                           // 0xc9
-	{ "JP Z, 0x%04X", 2, 0 },              // 0xca
+	{ "RET Z", 0, 4 },                       // 0xc8
+	{ "RET", 0, 8 },                           // 0xc9
+	{ "JP Z, 0x%04X", 2, 6 },              // 0xca
 	{ "CB %02X", 1, 0 },                      // 0xcb
-	{ "CALL Z, 0x%04X", 2, 0 },          // 0xcc
-	{ "CALL 0x%04X", 2, 6 },               // 0xcd
+	{ "CALL Z, 0x%04X", 2, 6 },          // 0xcc
+	{ "CALL 0x%04X", 2, 12 },               // 0xcd
 	{ "ADC 0x%02X", 1, 4 },                  // 0xce
 	{ "RST 0x08", 0, 8 },                   // 0xcf
-	{ "RET NC", 0, 0 },                     // 0xd0
+	{ "RET NC", 0, 4 },                     // 0xd0
 	{ "POP DE", 0, 6 },                     // 0xd1
-	{ "JP NC, 0x%04X", 2, 0 },            // 0xd2
+	{ "JP NC, 0x%04X", 2, 6 },            // 0xd2
 	{ "UNKNOWN", 0, 0 },                 // 0xd3
-	{ "CALL NC, 0x%04X", 2, 0 },        // 0xd4
+	{ "CALL NC, 0x%04X", 2, 6 },        // 0xd4
 	{ "PUSH DE", 0, 8 },                   // 0xd5
 	{ "SUB 0x%02X", 1, 4 },                  // 0xd6
 	{ "RST 0x10", 0, 8 },                   // 0xd7
-	{ "RET C", 0, 0 },                       // 0xd8
+	{ "RET C", 0, 4 },                       // 0xd8
 	{ "RETI", 0, 8 },          // 0xd9
-	{ "JP C, 0x%04X", 2, 0 },              // 0xda
+	{ "JP C, 0x%04X", 2, 6 },              // 0xda
 	{ "UNKNOWN", 0, 0 },                 // 0xdb
 	{ "CALL C, 0x%04X", 2, 0 },          // 0xdc
 	{ "UNKNOWN", 0, 0 },                 // 0xdd

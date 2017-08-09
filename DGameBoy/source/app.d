@@ -16,7 +16,6 @@ void main(string[] args)
 {
 	auto libSDLName = "external\\SDL2\\lib\\x64\\SDL2.dll";
 	DerelictSDL2.load(libSDLName);
-	writeln("Edit source/app.d to start your project.");
 
     fatal_error_if(SDL_Init(SDL_INIT_VIDEO), "Failed to initialize sdl!");
 
@@ -95,5 +94,4 @@ void main(string[] args)
 	SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-    writeln("If we got to this point everything went alright...");
 }

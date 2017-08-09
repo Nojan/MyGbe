@@ -24,7 +24,7 @@ bool test(u8 bit, u8 idx)
 }
 
 pure nothrow @nogc
-int val(u8 bit, u8 idx) 
+u8 val(u8 bit, u8 idx) 
 {
     assert(idx < 8);
     return !!(bit & (0x1 << idx));

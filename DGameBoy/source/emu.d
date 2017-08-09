@@ -1,6 +1,5 @@
 // http://blog.rekawek.eu/2017/02/09/coffee-gb/
 // https://github.com/retrio/gb-test-roms
-// https://realboyemulator.wordpress.com/2013/01/18/emulating-the-core-2/
 // My Own Gameboy Emulator
 import opcode;
 import memory;
@@ -27,6 +26,7 @@ public:
         CpuStep();
         Interrupt();
         ppu.Step(cpu.CycleCount, mem);
+        Interrupt();
     }
 
     void CpuStep() {
@@ -42,26 +42,65 @@ public:
         CpuExec(opcode, operand, ins);
     }
 
+    version(all)
+    {
+        import std.stdio;
+        File log_file;
+    }
+
     void CpuExec(const u8 opcode, const u16 operand, immutable instruction ins) {
+        if(true)
         {
             import std.stdio;
             import std.format;
+            import std.string;
             const u16 PC = cast(u16)(cpu.PC - 1);
-            write(format!"ROM0:%04X %02X "(PC, opcode));
+            string registers_line;
+            string state_line;
+            registers_line ~= format!"ROM0:%04X %02X "(PC, opcode);
             if(0 == ins.length)
-                write("      ");
+                registers_line ~= "      ";
             else if(1 == ins.length)
-                write(format!"%02X    "(cast(u8)operand));
+                registers_line ~= format!"%02X    "(cast(u8)operand);
             else
-                write(format!"%02X %02X "(cast(u8)operand, cast(u8)(operand >> 8)));
-            writeln(format!"State: AF%04X BC%04X DE%04X HL%04X SP%04X"(cpu.AF, cpu.BC, cpu.DE, cpu.HL, cpu.SP));
-            if(PC == 0x2B8)
+                registers_line ~= format!"%02X %02X "(cast(u8)operand, cast(u8)(operand >> 8));
+            registers_line ~= format!"Registers: AF%04X BC%04X DE%04X HL%04X SP%04X"(cpu.AF, cpu.BC, cpu.DE, cpu.HL, cpu.SP);
+            writeln(registers_line);
+            state_line = format!"State: cycle%04X lcdc%02X stat%02X ly%02X ie%02X if%02X"(cpu.TotalCycleCount, mem.readU8(mem.LCDC), mem.readU8(mem.STAT), mem.readU8(mem.LY), mem.readU8(mem.IE), mem.readU8(mem.IF));
+            writeln(state_line);
+            if(cpu.TotalCycleCount == 0x546F8)
             {
                 writeln("HALT");
             }
+
+            version(all)
+            {
+                import std.stdio;
+                import std.algorithm;
+                if( !log_file.isOpen() )
+                    log_file = File("cinoop_tetris.log", "r");
+                
+                string line;
+
+                void CompareToReference(const ref string line, const ref string reference)
+                {
+                    if(0 == cmp(line, reference))
+                    return;
+                    writeln("Mismatch:");
+                    writeln(line);
+                    writeln(reference);
+                    assert(false);
+                }
+
+                line = chop(log_file.readln()); // Read Register
+                CompareToReference(registers_line, line);
+                line = chop(log_file.readln()); // Read State
+                CompareToReference(state_line, line);
+            }
         }
         cpu.PC += ins.length;
-        cpu.CycleCount += ins.cycle * 2;
+        cpu.CycleCount += ins.cycle;
+        cpu.TotalCycleCount += ins.cycle;
 
         string GenSwitch(string opcode, string operand)
         {
@@ -94,7 +133,7 @@ public:
             return;
         
         enum : u8 {
-            I_VBLANK = 0,
+            I_VBLANK = 1<<0,
             I_LCDC   = 1<<1,
             I_TIMER  = 1<<2,
             I_SERIAL = 1<<3,
@@ -103,18 +142,40 @@ public:
 
         if(fire & I_VBLANK) {
             flag &= ~I_VBLANK;
-            vblankInterrupt();
+            jumpInterrupt(mem.VBLANK);
+        }
+
+        if(fire & I_LCDC) {
+            flag &= ~I_LCDC;
+            jumpInterrupt(mem.LCDSTAT);
+        }
+
+        if(fire & I_TIMER) {
+            flag &= ~I_TIMER;
+            jumpInterrupt(mem.TIMER);
+        }
+
+        if(fire & I_SERIAL) {
+            flag &= ~I_SERIAL;
+            jumpInterrupt(mem.SERIAL);
+        }
+
+        if(fire & I_JOY) {
+            flag &= ~I_JOY;
+            jumpInterrupt(mem.JOYPAD);
         }
 
         mem.writeU8(mem.IF, flag);
     }
 
-    void vblankInterrupt() {
-        // draw time
+    void jumpInterrupt(const u16 address) {
         cpu.IME = 0;
-        immutable u8 jump_opcode = 0xCD;
-        immutable instruction = instruction_table[jump_opcode];
-        CpuExec(jump_opcode, mem.VBLANK, instruction);
+        cpu.CycleCount += 12;
+        cpu.TotalCycleCount += 12;
+        opcode_CD(address);
+        //immutable u8 jump_opcode = 0xCD;
+        //immutable instruction = instruction_table[jump_opcode];
+        //CpuExec(jump_opcode, address, instruction);
     }
 
 private:
@@ -124,6 +185,7 @@ private:
         immutable instruction ins = cb_instruction_table[cb_opcode];
         cpu.PC += ins.length;
         cpu.CycleCount += ins.cycle;
+        cpu.TotalCycleCount += ins.cycle;
 
         string GenSwitch(string opcode, string operand)
         {
@@ -142,6 +204,12 @@ private:
 
         mixin(GenSwitch("cb_opcode", "operand"));
     }
+
+    void extra_cycle(const u8 cycle) {
+        cpu.CycleCount += cycle;
+        cpu.TotalCycleCount += cycle;
+    }
+
     // 8 bit load
     // LD nn,n
     void opcode_06(const u16 operand) {
@@ -185,7 +253,7 @@ private:
         cpu.A = cpu.L;
     }
     void opcode_7E(const u16 operand) {
-        cpu.A = cast(u8)cpu.HL;
+        cpu.A = mem.readU8(cpu.HL);
     }
     void opcode_40(const u16 operand) {
         cpu.B = cpu.B;
@@ -206,7 +274,7 @@ private:
         cpu.B = cpu.L;
     }
     void opcode_46(const u16 operand) {
-        cpu.B = cast(u8)cpu.HL;
+        cpu.B = mem.readU8(cpu.HL);
     }
     void opcode_48(const u16 operand) {
         cpu.C = cpu.B;
@@ -227,7 +295,7 @@ private:
         cpu.C = cpu.L;
     }
     void opcode_4E(const u16 operand) {
-        cpu.C = cast(u8)cpu.HL;
+        cpu.C = mem.readU8(cpu.HL);
     }
     void opcode_50(const u16 operand) {
         cpu.D = cpu.B;
@@ -248,7 +316,7 @@ private:
         cpu.D = cpu.L;
     }
     void opcode_56(const u16 operand) {
-        cpu.D = cast(u8)cpu.HL;
+        cpu.D = mem.readU8(cpu.HL);
     }
     void opcode_58(const u16 operand) {
         cpu.E = cpu.B;
@@ -269,7 +337,7 @@ private:
         cpu.E = cpu.L;
     }
     void opcode_5E(const u16 operand) {
-        cpu.E = cast(u8)cpu.HL;
+        cpu.E = mem.readU8(cpu.HL);
     }
     void opcode_60(const u16 operand) {
         cpu.H = cpu.B;
@@ -290,7 +358,7 @@ private:
         cpu.H = cpu.L;
     }
     void opcode_66(const u16 operand) {
-        cpu.H = cast(u8)cpu.HL;
+        cpu.H = mem.readU8(cpu.HL);
     }
     void opcode_68(const u16 operand) {
         cpu.L = cpu.B;
@@ -311,38 +379,38 @@ private:
         cpu.L = cpu.L;
     }
     void opcode_6E(const u16 operand) {
-        cpu.L = cast(u8)cpu.HL;
+        cpu.L = mem.readU8(cpu.HL);
     }
     void opcode_70(const u16 operand) {
-        cpu.HL = cpu.B;
+        mem.writeU8(cpu.HL, cpu.B);
     }
     void opcode_71(const u16 operand) {
-        cpu.HL = cpu.C;
+        mem.writeU8(cpu.HL, cpu.C);
     }
     void opcode_72(const u16 operand) {
-        cpu.HL = cpu.D;
+        mem.writeU8(cpu.HL, cpu.D);
     }
     void opcode_73(const u16 operand) {
-        cpu.HL = cpu.E;
+        mem.writeU8(cpu.HL, cpu.E);
     }
     void opcode_74(const u16 operand) {
-        cpu.HL = cpu.H;
+        mem.writeU8(cpu.HL, cpu.H);
     }
     void opcode_75(const u16 operand) {
-        cpu.HL = cpu.L;
+        mem.writeU8(cpu.HL, cpu.L);
     }
     void opcode_36(const u16 operand) {
-        cpu.HL = cpu.HL;
+        mem.writeU8(cpu.HL, cast(u8)(operand & 0xff));
     }
     // LD A,n
     void opcode_0A(const u16 operand) {
-        cpu.A = cast(u8)cpu.BC;
+        cpu.A = mem.readU8(cpu.BC);
     }
     void opcode_1A(const u16 operand) {
-        cpu.A = cast(u8)cpu.DE;
+        cpu.A = mem.readU8(cpu.DE);
     }
     void opcode_FA(const u16 operand) {
-        cpu.A = cast(u8)operand;
+        cpu.A =  mem.readU8(operand);
     }
     void opcode_3E(const u16 operand) {
         cpu.A = cast(u8)operand;
@@ -367,13 +435,13 @@ private:
         cpu.L = cpu.A;
     }
     void opcode_02(const u16 operand) {
-        cpu.BC = cpu.A;
+        mem.writeU8(cpu.BC, cpu.A);
     }
     void opcode_12(const u16 operand) {
-        cpu.DE = cpu.A;
+        mem.writeU8(cpu.DE, cpu.A);
     }
     void opcode_77(const u16 operand) {
-        cpu.HL = cpu.A;
+        mem.writeU8(cpu.HL, cpu.A);
     }
     void opcode_EA(const u16 operand) {
         mem.writeU8(operand, cpu.A);
@@ -456,45 +524,37 @@ private:
     }
     // PUSH nn
     void opcode_F5(const u16 operand) {
+        cpu.SP -= 2;
         mem.writeU16(cpu.SP, cpu.AF);
-        cpu.SP--;
-        cpu.SP--;
     }
     void opcode_C5(const u16 operand) {
+        cpu.SP -= 2;
         mem.writeU16(cpu.SP, cpu.BC);
-        cpu.SP--;
-        cpu.SP--;
     }
     void opcode_D5(const u16 operand) {
+        cpu.SP -= 2;
         mem.writeU16(cpu.SP, cpu.DE);
-        cpu.SP--;
-        cpu.SP--;
     }
     void opcode_E5(const u16 operand) {
+        cpu.SP -= 2;
         mem.writeU16(cpu.SP, cpu.HL);
-        cpu.SP--;
-        cpu.SP--;
     }
     // POP nn
     void opcode_F1(const u16 operand) {
         cpu.AF = mem.readU16(cpu.SP);
-        cpu.SP++;
-        cpu.SP++;
+        cpu.SP += 2;
     }
     void opcode_C1(const u16 operand) {
         cpu.BC = mem.readU16(cpu.SP);
-        cpu.SP++;
-        cpu.SP++;
+        cpu.SP += 2;
     }
     void opcode_D1(const u16 operand) {
         cpu.DE = mem.readU16(cpu.SP);
-        cpu.SP++;
-        cpu.SP++;
+        cpu.SP += 2;
     }
     void opcode_E1(const u16 operand) {
         cpu.HL = mem.readU16(cpu.SP);
-        cpu.SP++;
-        cpu.SP++;
+        cpu.SP += 2;
     }
     // 8-Bit ALU
     void addu8(ref u8 destination, u8 value) {
@@ -538,9 +598,9 @@ private:
 	    destination -= value;
 	
 	    if(0 != destination) 
-            cpu.FlagH = 0;
+            cpu.FlagZ = 0;
         else 
-            cpu.FlagH = 1;
+            cpu.FlagZ = 1;
     }
     void subcu8(ref u8 destination, u8 value) {
         subu8(destination, cast(u8)(value + cpu.FlagC));
@@ -581,9 +641,9 @@ private:
     }
     void inc(ref u8 destination) {
         if((destination & 0x0f) == 0x0f) 
-            cpu.FlagH = 0;
-        else 
             cpu.FlagH = 1;
+        else 
+            cpu.FlagH = 0;
 
 	    destination++;
 	
@@ -632,7 +692,7 @@ private:
         addu8(cpu.A, cpu.L);
     }
     void opcode_86(const u16 operand) {
-        addu8(cpu.A, cast(u8)cpu.HL);
+        addu8(cpu.A, mem.readU8(cpu.HL));
     }
     void opcode_C6(const u16 operand) {
         addu8(cpu.A, cast(u8)(operand & 0x00FF));
@@ -660,7 +720,7 @@ private:
         addcu8(cpu.A, cpu.L);
     }
     void opcode_8E(const u16 operand) {
-        addcu8(cpu.A, cast(u8)cpu.HL);
+        addcu8(cpu.A, mem.readU8(cpu.HL));
     }
     void opcode_CE(const u16 operand) {
         addcu8(cpu.A, cast(u8)(operand & 0x00FF));
@@ -688,7 +748,7 @@ private:
         subu8(cpu.A, cpu.L);
     }
     void opcode_96(const u16 operand) {
-        subu8(cpu.A, cast(u8)cpu.HL);
+        subu8(cpu.A, mem.readU8(cpu.HL));
     }
     void opcode_D6(const u16 operand) {
         subu8(cpu.A, cast(u8)(operand & 0x00FF));
@@ -716,7 +776,7 @@ private:
         subcu8(cpu.A, cpu.L);
     }
     void opcode_9E(const u16 operand) {
-        subcu8(cpu.A, cast(u8)cpu.HL);
+        subcu8(cpu.A, mem.readU8(cpu.HL));
     }
     void opcode_DE(const u16 operand) {
         subcu8(cpu.A, cast(u8)(operand & 0x00FF));
@@ -744,7 +804,7 @@ private:
         and(cpu.A, cpu.L);
     }
     void opcode_A6(const u16 operand) {
-        and(cpu.A, cast(u8)cpu.HL);
+        and(cpu.A, mem.readU8(cpu.HL));
     }
     void opcode_E6(const u16 operand) {
         and(cpu.A, cast(u8)(operand & 0x00FF));
@@ -772,7 +832,7 @@ private:
         or(cpu.A, cpu.L);
     }
     void opcode_B6(const u16 operand) {
-        or(cpu.A, cast(u8)cpu.HL);
+        or(cpu.A, mem.readU8(cpu.HL));
     }
     void opcode_F6(const u16 operand) {
         or(cpu.A, cast(u8)(operand & 0x00FF));
@@ -800,7 +860,7 @@ private:
         xor(cpu.A, cpu.L);
     }
     void opcode_AE(const u16 operand) {
-        xor(cpu.A, cast(u8)cpu.HL);
+        xor(cpu.A, mem.readU8(cpu.HL));
     }
     void opcode_EE(const u16 operand) {
         xor(cpu.A, cast(u8)(operand & 0x00FF));
@@ -828,7 +888,7 @@ private:
         cp(cpu.A, cpu.L);
     }
     void opcode_BE(const u16 operand) {
-        cp(cpu.A, cast(u8)cpu.HL);
+        cp(cpu.A, mem.readU8(cpu.HL));
     }
     void opcode_FE(const u16 operand) {
         cp(cpu.A, cast(u8)(operand & 0x00FF));
@@ -856,8 +916,9 @@ private:
         inc(cpu.L);
     }
     void opcode_34(const u16 operand) {
-        inc(cpu.L);
-        cpu.HL = cpu.L;
+        u8 value = mem.readU8(cpu.HL);
+        inc(value);
+        mem.writeU8(cpu.HL, value);
     }
     // DEC n
     void opcode_3D(const u16 operand) {
@@ -888,7 +949,21 @@ private:
     // 16-Bit Arithmetic
     // ADD HL,n
     void add_hl(ref u16 destination, u16 value) {
-        assert(false);
+        const u32 result = destination + value;
+
+        if(result & 0xffff0000) 
+            cpu.FlagC = 1;
+	    else 
+            cpu.FlagC = 0;
+
+        destination = cast(u16)(result & 0xffff);
+
+        if(((destination & 0x0f) + (value & 0x0f)) > 0x0f) 
+            cpu.FlagH = 1;
+	    else 
+            cpu.FlagH = 0;
+
+        cpu.FlagN = 0;
     }
     void opcode_09(const u16 operand) {
         add_hl(cpu.HL, cpu.BC);
@@ -1065,7 +1140,7 @@ private:
     void opcode_cb_43(const u16 operand) { bittest(0, cpu.E); }
     void opcode_cb_44(const u16 operand) { bittest(0, cpu.H); }
     void opcode_cb_45(const u16 operand) { bittest(0, cpu.L); }
-    void opcode_cb_46(const u16 operand) { bittest(0, cast(u8)cpu.HL); }
+    void opcode_cb_46(const u16 operand) { bittest(0, mem.readU8(cpu.HL)); }
     void opcode_cb_4F(const u16 operand) { bittest(1, cpu.A); }
     void opcode_cb_48(const u16 operand) { bittest(1, cpu.B); }
     void opcode_cb_49(const u16 operand) { bittest(1, cpu.C); }
@@ -1073,7 +1148,7 @@ private:
     void opcode_cb_4B(const u16 operand) { bittest(1, cpu.E); }
     void opcode_cb_4C(const u16 operand) { bittest(1, cpu.H); }
     void opcode_cb_4D(const u16 operand) { bittest(1, cpu.L); }
-    void opcode_cb_4E(const u16 operand) { bittest(1, cast(u8)cpu.HL); }
+    void opcode_cb_4E(const u16 operand) { bittest(1, mem.readU8(cpu.HL)); }
     void opcode_cb_57(const u16 operand) { bittest(2, cpu.A); }
     void opcode_cb_50(const u16 operand) { bittest(2, cpu.B); }
     void opcode_cb_51(const u16 operand) { bittest(2, cpu.C); }
@@ -1081,7 +1156,7 @@ private:
     void opcode_cb_53(const u16 operand) { bittest(2, cpu.E); }
     void opcode_cb_54(const u16 operand) { bittest(2, cpu.H); }
     void opcode_cb_55(const u16 operand) { bittest(2, cpu.L); }
-    void opcode_cb_56(const u16 operand) { bittest(2, cast(u8)cpu.HL); }
+    void opcode_cb_56(const u16 operand) { bittest(2, mem.readU8(cpu.HL)); }
     void opcode_cb_5F(const u16 operand) { bittest(3, cpu.A); }
     void opcode_cb_58(const u16 operand) { bittest(3, cpu.B); }
     void opcode_cb_59(const u16 operand) { bittest(3, cpu.C); }
@@ -1089,7 +1164,7 @@ private:
     void opcode_cb_5B(const u16 operand) { bittest(3, cpu.E); }
     void opcode_cb_5C(const u16 operand) { bittest(3, cpu.H); }
     void opcode_cb_5D(const u16 operand) { bittest(3, cpu.L); }
-    void opcode_cb_5E(const u16 operand) { bittest(3, cast(u8)cpu.HL); }
+    void opcode_cb_5E(const u16 operand) { bittest(3, mem.readU8(cpu.HL)); }
     void opcode_cb_67(const u16 operand) { bittest(4, cpu.A); }
     void opcode_cb_60(const u16 operand) { bittest(4, cpu.B); }
     void opcode_cb_61(const u16 operand) { bittest(4, cpu.C); }
@@ -1097,7 +1172,7 @@ private:
     void opcode_cb_63(const u16 operand) { bittest(4, cpu.E); }
     void opcode_cb_64(const u16 operand) { bittest(4, cpu.H); }
     void opcode_cb_65(const u16 operand) { bittest(4, cpu.L); }
-    void opcode_cb_66(const u16 operand) { bittest(4, cast(u8)cpu.HL); }
+    void opcode_cb_66(const u16 operand) { bittest(4, mem.readU8(cpu.HL)); }
     void opcode_cb_6F(const u16 operand) { bittest(5, cpu.A); }
     void opcode_cb_68(const u16 operand) { bittest(5, cpu.B); }
     void opcode_cb_69(const u16 operand) { bittest(5, cpu.C); }
@@ -1105,7 +1180,7 @@ private:
     void opcode_cb_6B(const u16 operand) { bittest(5, cpu.E); }
     void opcode_cb_6C(const u16 operand) { bittest(5, cpu.H); }
     void opcode_cb_6D(const u16 operand) { bittest(5, cpu.L); }
-    void opcode_cb_6E(const u16 operand) { bittest(5, cast(u8)cpu.HL); }
+    void opcode_cb_6E(const u16 operand) { bittest(5, mem.readU8(cpu.HL)); }
     void opcode_cb_77(const u16 operand) { bittest(6, cpu.A); }
     void opcode_cb_70(const u16 operand) { bittest(6, cpu.B); }
     void opcode_cb_71(const u16 operand) { bittest(6, cpu.C); }
@@ -1113,7 +1188,7 @@ private:
     void opcode_cb_73(const u16 operand) { bittest(6, cpu.E); }
     void opcode_cb_74(const u16 operand) { bittest(6, cpu.H); }
     void opcode_cb_75(const u16 operand) { bittest(6, cpu.L); }
-    void opcode_cb_76(const u16 operand) { bittest(6, cast(u8)cpu.HL); }
+    void opcode_cb_76(const u16 operand) { bittest(6, mem.readU8(cpu.HL)); }
     void opcode_cb_7F(const u16 operand) { bittest(7, cpu.A); }
     void opcode_cb_78(const u16 operand) { bittest(7, cpu.B); }
     void opcode_cb_79(const u16 operand) { bittest(7, cpu.C); }
@@ -1121,7 +1196,7 @@ private:
     void opcode_cb_7B(const u16 operand) { bittest(7, cpu.E); }
     void opcode_cb_7C(const u16 operand) { bittest(7, cpu.H); }
     void opcode_cb_7D(const u16 operand) { bittest(7, cpu.L); }
-    void opcode_cb_7E(const u16 operand) { bittest(7, cast(u8)cpu.HL); }
+    void opcode_cb_7E(const u16 operand) { bittest(7, mem.readU8(cpu.HL)); }
     // SET b,r
     void bitset(u8 bitIndex, ref u8 destination) {
         destination = bitop.set(destination, bitIndex);
@@ -1264,41 +1339,67 @@ private:
         cpu.PC = operand;
      }
     // JP cc,nn
-    void opcode_C2(const u16 operand) { assert(false); }
-    void opcode_CA(const u16 operand) { assert(false); }
-    void opcode_D2(const u16 operand) { assert(false); }
-    void opcode_DA(const u16 operand) { assert(false); }
+    void opcode_C2(const u16 operand) { 
+        if(!cpu.FlagZ)
+        {
+            cpu.PC = operand;
+            extra_cycle(2);
+        }
+    }
+    void opcode_CA(const u16 operand) { 
+        if(cpu.FlagZ)
+        {
+            cpu.PC = operand;
+            extra_cycle(2);
+        }
+    }
+    void opcode_D2(const u16 operand) { 
+        if(!cpu.FlagC)
+        {
+            cpu.PC = operand;
+            extra_cycle(2);
+        }
+    }
+    void opcode_DA(const u16 operand) { 
+        if(cpu.FlagC)
+        {
+            cpu.PC = operand;
+            extra_cycle(2);
+        }
+    }
     // JP (HL)
-    void opcode_E9(const u16 operand) { assert(false); }
+    void opcode_E9(const u16 operand) { 
+        cpu.PC = cpu.HL;
+    }
     // JR n
-    void opcode_18(const u16 operand) { assert(false); }
+    void opcode_18(const u16 operand) { 
+        int offset = cast(i8)(0x00FF & operand);
+        int address = cast(int)cpu.PC + offset;
+        cpu.PC = cast(u16)address;
+    }
     // JR cc,n
     void opcode_20(const u16 operand) { 
         if(0 == cpu.FlagZ) {
-            int offset = cast(i8)(0x00FF & operand);
-            int address = cast(int)cpu.PC + offset;
-            cpu.PC = cast(u16)address;
+            opcode_18(operand);
+            extra_cycle(2);
         }
     }
     void opcode_28(const u16 operand) { 
         if(1 == cpu.FlagZ) {
-            int offset = cast(i8)(0x00FF & operand);
-            int address = cast(int)cpu.PC + offset;
-            cpu.PC = cast(u16)address;
+            opcode_18(operand);
+            extra_cycle(2);
         }
     }
     void opcode_30(const u16 operand) { 
         if(0 == cpu.FlagC) {
-            int offset = cast(i8)(0x00FF & operand);
-            int address = cast(int)cpu.PC + offset;
-            cpu.PC = cast(u16)address;
+            opcode_18(operand);
+            extra_cycle(2);
         }
     }
     void opcode_38(const u16 operand) { 
         if(1 == cpu.FlagC) {
-            int offset = cast(i8)(0x00FF & operand);
-            int address = cast(int)cpu.PC + offset;
-            cpu.PC = cast(u16)address;
+            opcode_18(operand);
+            extra_cycle(2);
         }
     }
     // Calls
@@ -1315,14 +1416,14 @@ private:
     void opcode_DC(const u16 operand) { assert(false); }
     // Restarts
     // RST n
-    void opcode_C7(const u16 operand) { assert(false); }
-    void opcode_CF(const u16 operand) { assert(false); }
-    void opcode_D7(const u16 operand) { assert(false); }
-    void opcode_DF(const u16 operand) { assert(false); }
-    void opcode_E7(const u16 operand) { assert(false); }
-    void opcode_EF(const u16 operand) { assert(false); }
-    void opcode_F7(const u16 operand) { assert(false); }
-    void opcode_FF(const u16 operand) { assert(false); }
+    void opcode_C7(const u16 operand) { opcode_CD(0x00); }
+    void opcode_CF(const u16 operand) { opcode_CD(0x08); }
+    void opcode_D7(const u16 operand) { opcode_CD(0x10); }
+    void opcode_DF(const u16 operand) { opcode_CD(0x18); }
+    void opcode_E7(const u16 operand) { opcode_CD(0x20); }
+    void opcode_EF(const u16 operand) { opcode_CD(0x28); }
+    void opcode_F7(const u16 operand) { opcode_CD(0x30); }
+    void opcode_FF(const u16 operand) { opcode_CD(0x38); }
     // Returns
     // RET
     void opcode_C9(const u16 operand) {     
@@ -1330,10 +1431,25 @@ private:
         cpu.SP+=2;
     }
     // RET cc
-    void opcode_C0(const u16 operand) { assert(false); }
-    void opcode_C8(const u16 operand) { assert(false); }
-    void opcode_D0(const u16 operand) { assert(false); }
-    void opcode_D8(const u16 operand) { assert(false); }
+    void returnIfFlagValue(const u16 address, bool test) {
+        if(test)
+        {
+            extra_cycle(6);
+            opcode_C9(address);
+        }
+    }
+    void opcode_C0(const u16 operand) { 
+        returnIfFlagValue(operand, !cpu.FlagZ);
+    }
+    void opcode_C8(const u16 operand) { 
+        returnIfFlagValue(operand, cpu.FlagZ);
+    }
+    void opcode_D0(const u16 operand) { 
+        returnIfFlagValue(operand, !cpu.FlagC);
+    }
+    void opcode_D8(const u16 operand) { 
+        returnIfFlagValue(operand, cpu.FlagC);
+    }
     // RETI
     void opcode_D9(const u16 operand) { 
         opcode_FB(operand); // EI
@@ -1361,4 +1477,29 @@ public:
     CPU cpu;
     PPU ppu;
     Memory mem;
+
+    unittest
+    {
+        Emu emu;
+
+        void RenderFunction(const u8[] lcd) { }
+        emu.SetRenderDelegate(&RenderFunction);
+
+        emu.Reset();
+        const u16 PC = emu.cpu.PC;
+        emu.mem.writeU8(cast(u16)(PC+0), cast(u8)0xCD);
+        emu.mem.writeU16(cast(u16)(PC+1), cast(u16)(PC+4));
+        emu.mem.writeU8(cast(u16)(PC+3), cast(u8)0x00);
+        emu.mem.writeU8(cast(u16)(PC+4), cast(u8)0xCD);
+        emu.mem.writeU16(cast(u16)(PC+5), cast(u16)(PC+8));
+        emu.mem.writeU8(cast(u16)(PC+7), cast(u8)0xC9);
+        emu.mem.writeU8(cast(u16)(PC+8), cast(u8)0xC9);
+
+        emu.Frame();
+        emu.Frame();
+        assert(emu.cpu.PC == cast(u16)(PC+8));
+        emu.Frame();
+        emu.Frame();
+        assert(emu.cpu.PC == cast(u16)(PC+3));
+    }
 }

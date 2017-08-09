@@ -3,13 +3,33 @@ import numeric_alias;
 struct Memory {
 
     pure nothrow @nogc
-    u8 readU8(u16 address) const { return mem[address]; }
+    u8 readU8(u16 address) const 
+    { 
+        u8 value = mem[address];
+        if(P1 == address)
+        {
+            if( !(value & 0x20) )
+                value = 0xDF;
+            else if( !(value & 0x10) )
+                value = 0xEF;
+            else if( !(value & 0x30) )
+                value = 0xFF;
+            else
+                value = 0;
+        }
+        return value; 
+    }
 
     pure nothrow @nogc
     void writeU8(u16 address, u8 value)
     { 
-        if(SCNL == address)
+        if(LY == address)
             value = 0;
+        if(DMA == address)
+        {        
+            dmaTransfert(value);
+            return;
+        }
         mem[address] = value; 
     }
 
@@ -35,6 +55,11 @@ struct Memory {
 
     enum : u16 {
         VBLANK = 0x0040,
+        LCDSTAT = 0x0048,
+        TIMER = 0x0050,
+        SERIAL = 0x0058,
+        JOYPAD = 0x0060,
+        P1 = 0xFF00,
         TIMA = 0xFF05,
         TMA = 0xFF06,
         TAC = 0xFF07,
@@ -58,11 +83,12 @@ struct Memory {
         NR51 = 0xFF25,
         NR52 = 0xFF26,
         LCDC = 0xFF40,
-        LCDS = 0xFF41,
+        STAT = 0xFF41,
         SCY = 0xFF42,
         SCX = 0xFF43,
-        SCNL = 0xFF44,
+        LY = 0xFF44,
         LYC = 0xFF45,
+        DMA = 0xFF46,
         BGP = 0xFF47,
         OBP0 = 0xFF48,
         OBP1 = 0xFF49,
@@ -72,9 +98,11 @@ struct Memory {
     }
 
     void Reset() {
+        mem[P1] = 0xEF; 
         mem[TIMA] = 0x00; 
         mem[TMA] = 0x00; 
         mem[TAC] = 0x00; 
+        mem[IF] = 0x00; 
         mem[NR10] = 0x80; 
         mem[NR11] = 0x00; 
         mem[NR12] = 0xF3; 
@@ -94,8 +122,10 @@ struct Memory {
         mem[NR51] = 0xF3;
         mem[NR52] = 0xF1;
         mem[LCDC] = 0x91;
+        mem[STAT] = 0x80;
         mem[SCY] = 0x00; 
-        mem[SCX] = 0x00; 
+        mem[SCX] = 0x00;
+        mem[LY] = 0x00; 
         mem[LYC] = 0x00; 
         mem[BGP] = 0xFC; 
         mem[OBP0] = 0xFF;
@@ -115,6 +145,18 @@ struct Memory {
             immutable u16 address = 0x100;
             m.writeU16(address, test_value);
             assert(test_value == m.readU16(address));
+        }
+    }
+
+private:
+    pure nothrow @nogc
+    void dmaTransfert(u8 value)
+    {
+        const u16 address = value << 0x8;
+        for (u16 i = 0 ; i < 0xA0; i++)
+        {
+            const u8 val = readU8(cast(u8)(address+i));
+            writeU8(cast(u8)(0xFE00+i), val);
         }
     }
 }

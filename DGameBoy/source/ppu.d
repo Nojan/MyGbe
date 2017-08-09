@@ -10,64 +10,105 @@ struct PPU {
     
     void Step(i16 cycleCount, ref Memory mem) 
     {
-        u8 status = mem.readU8(mem.LCDC);
+        u8 status = mem.readU8(mem.STAT);
         immutable bool isEnable = bitop.test(status,7);
-        if(!isEnable)
+        if(false && !isEnable)
         {
-            scanLineCounter = 456;
-            mem.writeU8(mem.SCNL, 0);
+            scanLineCounter = 0;
+            mem.writeU8(mem.LY, 0);
             status &= 252;
             status = bitop.set(status, 0);
-            mem.writeU8(mem.LCDS, status);
+            mem.writeU8(mem.STAT, status);
             return;
         }
-        u8 currentline = mem.readU8(mem.SCNL);
+        u8 currentline = mem.readU8(mem.LY);
         immutable u8 currentmode = status & 0x3;
-        u8 mode = 0;
-        bool reqInt = false; 
-        if (currentline >= 144)
-        {      
-            mode = 1;
-            status = bitop.set(status, 0);
-            status = bitop.reset(status, 1);
-            reqInt = bitop.test(status, 4);
-        }
-        else
-        {
-            immutable int mode2bounds = 456-80;
-            immutable int mode3bounds = mode2bounds - 172;
+        u8 mode = currentmode;
 
-            // mode 2
-            if (scanLineCounter >= mode2bounds)
+        enum : u8 { MODE_HBLANK = 0, MODE_VBLANK = 1, MODE_OAM = 2, MODE_VRAM = 3, }
+
+        bool reqInt = false;
+        scanLineCounter += cycleCount;
+        if(MODE_HBLANK == currentmode) 
+        {
+            if(204 <= scanLineCounter)
             {
-                mode = 2 ;
-                status = bitop.set(status, 1);
-                status = bitop.reset(status, 0);
-                reqInt = bitop.test(status, 5);
+                currentline++;
+                if(143 == currentline) 
+                {
+					mode = MODE_VBLANK;
+                    m_renderDelegate(lcd);
+				}
+				else 
+                    mode = MODE_OAM;
+                scanLineCounter -= 204;
             }
-            // mode 3
-            else if(scanLineCounter >= mode3bounds)
+        }
+        else if(MODE_VBLANK == currentmode) 
+        {
+            if(456 <= scanLineCounter)
             {
-                mode = 3 ;
-                status = bitop.set(status, 1);
-                status = bitop.set(status, 0);
+                currentline++;
+                if(153 < currentline) 
+                {
+					currentline = 0;
+                    mode = MODE_OAM;
+				}
+                scanLineCounter -= 456;
             }
-            // mode 0
-            else
+        }
+        else if(MODE_OAM == currentmode) 
+        {
+            if(80 <= scanLineCounter)
             {
-                mode = 0;
+                mode = MODE_VRAM;
+                scanLineCounter -= 80;
+            }
+        }
+        else if(MODE_VRAM == currentmode) 
+        {
+            if(172 <= scanLineCounter)
+            {
+                mode = MODE_HBLANK;
+                scanLineCounter -= 172;
+                DrawScanLine(mem, currentline, status);
+            }
+        }
+
+        if(currentmode != mode)
+        {
+            if(MODE_HBLANK == mode)
+            {
                 status = bitop.reset(status, 1);
                 status = bitop.reset(status, 0);
                 reqInt = bitop.test(status, 3);
             }
+            else if(MODE_VBLANK == mode)
+            {
+                status = bitop.set(status, 0);
+                status = bitop.reset(status, 1);
+                reqInt = true; //bitop.test(status, 4);
+            }
+            else if(MODE_OAM == mode)
+            {
+                status = bitop.set(status, 1);
+                status = bitop.reset(status, 0);
+                reqInt = bitop.test(status, 5);
+            }
+            else if(MODE_VRAM == mode)
+            {
+                status = bitop.set(status, 1);
+                status = bitop.set(status, 0);
+            }
+            
+            if(reqInt && MODE_VBLANK == mode)
+            {
+                RequestInterupt(mem, 0);
+            }
         }
 
-        // just entered a new mode so request interupt
-        if (reqInt && (mode != currentmode))
-            RequestInterupt(mem, 1);
-
         // check the conincidence flag
-        if (currentline == mem.readU8(mem.LYC))
+        if (false && currentline == mem.readU8(mem.LYC))
         {
             status = bitop.set(status, 2);
             if (bitop.test(status, 6))
@@ -77,31 +118,8 @@ struct PPU {
         {
             status = bitop.reset(status, 2);
         }
-        mem.writeU8(mem.LCDS, status);
-
-        scanLineCounter -= cycleCount;
-        if(scanLineCounter <= 0) 
-        {
-            currentline++;
-            scanLineCounter = 456 ;
-
-            if (currentline == 144)
-            {
-                RequestInterupt(mem, 0);
-                m_renderDelegate(lcd);
-            }
-            else if (currentline > 153)
-            {    
-                currentline = 0;
-            }
-            else if (currentline < 144)
-            {
-                DrawScanLine(mem, currentline, status);
-                m_renderDelegate(lcd);
-            }
-
-            mem.mem[mem.SCNL] = currentline;
-        }
+        mem.writeU8(mem.STAT, status);
+        mem.mem[mem.LY] = currentline;
     }
 
     void delegate(const u8[]) m_renderDelegate;
@@ -111,7 +129,7 @@ private:
     void RequestInterupt(ref Memory mem, u8 idx)
     {
         u8 flag = mem.readU8(mem.IF);
-        flag = bitop.set(flag, 0x1);
+        flag = bitop.set(flag, idx);
         mem.writeU8(mem.IF, flag);
     }
 
@@ -122,13 +140,7 @@ private:
             RenderTiles(mem, currentline, status);
         
          if (bitop.test(status, 1))
-            RenderSprites(mem);
-
-        const u8 value = currentline % 2 == 0 ? 1 : 0;
-        for(int idx = currentline*lcd_width; idx < (currentline+1)*lcd_width; ++idx)
-        {
-            lcd[idx] = value;
-        }
+            RenderSprites(mem, currentline, status);
     }
 
     void RenderTiles(ref Memory mem, immutable u8 currentline, immutable u8 status)
@@ -171,6 +183,8 @@ private:
             yPos = cast(u8)(yPos - windowY);
 
         u16 tileRow = ((cast(u8)(yPos/8))*32);
+
+        immutable u8 palette = mem.readU8(mem.BGP);
 
         // time to start drawing the 160 horizontal pixels
         // for this scanline
@@ -225,34 +239,107 @@ private:
 
             // combine data 2 and data 1 to get the colour id for this pixel
             // in the tile
-            int colourNum = bitop.val(data2, colourBit) ;
+            u8 colourNum = bitop.val(data2, colourBit) ;
             colourNum <<= 1;
             colourNum |= bitop.val(data1, colourBit) ;
 
-            // now we have the colour id get the actual
-            // colour from palette 0xFF47
-            //COLOUR col = GetColour(colourNum, 0xFF47) ;
-            u8 colorValue = 2;
-
-            // setup the RGB values
-            // switch(col)
-            // {
-            //     case WHITE: colorValue = 3; break;
-            //     case LIGHT_GRAY: colorValue = 2; break ;
-            //     case DARK_GRAY: colorValue = 1; break ;
-            // }
-
+            u8 colorValue = GetColourFromPalette(colourNum, palette);
 
             lcd[currentlineoffset + pixel] = colorValue;
         }
     }
 
-    void RenderSprites(ref Memory mem)
+    void RenderSprites(ref Memory mem, immutable u8 currentline, immutable u8 status)
     {
-        
+        const bool use8x16 = bitop.test(status,2);
+        const u16 currentlineoffset = cast(u16)(currentline * lcd_width);
+        for (u8 sprite = 0 ; sprite < 40; sprite++)
+        {
+            // sprite occupies 4 u8s in the sprite attributes table
+            const u8 index = cast(u8)(sprite*4);
+            const u8 yPos = cast(u8)(mem.readU8(0xFE00+index) - 16);
+            const u8 xPos = cast(u8)(mem.readU8(0xFE00+index+1)-8);
+            const u8 tileLocation = mem.readU8(0xFE00+index+2) ;
+            const u8 attributes = mem.readU8(0xFE00+index+3) ;
+
+            bool yFlip = bitop.test(attributes,6) ;
+            bool xFlip = bitop.test(attributes,5) ;
+
+            int scanline = mem.readU8(0xFF44);
+
+            int ysize = 8;
+            if (use8x16)
+                ysize = 16;
+
+            // does this sprite intercept with the scanline?
+            if ((scanline >= yPos) && (scanline < (yPos+ysize)))
+            {
+                int line = scanline - yPos ;
+
+                // read the sprite in backwards in the y axis
+                if (yFlip)
+                {
+                    line -= ysize ;
+                    line *= -1 ;
+                }
+
+                line *= 2; // same as for tiles
+                u16 dataAddress = cast(u16)((0x8000 + (tileLocation * 16)) + line);
+                u8 data1 = mem.readU8( dataAddress ) ;
+                u8 data2 = mem.readU8( cast(u16)(dataAddress +1) ) ;
+
+                // its easier to read in from right to left as pixel 0 is
+                // bit 7 in the colour data, pixel 1 is bit 6 etc...
+                for (u8 tilePixel = 7; tilePixel < 7; tilePixel--)
+                {
+                    u8 colourbit = tilePixel ;
+                    // read the sprite in backwards for the x axis
+                    if (xFlip)
+                    {
+                        colourbit -= 7 ;
+                        colourbit *= -1 ;
+                    }
+
+                    // the rest is the same as for tiles
+                    u8 colourNum = bitop.val(data2, colourbit) ;
+                    colourNum <<= 1;
+                    colourNum |= bitop.val(data1, colourbit) ;
+
+                    u16 colourAddress = bitop.test(attributes,4) ? 0xFF49 : 0xFF48;
+                    const u8 palette = mem.readU8(colourAddress);
+                    const u8 colorValue = GetColourFromPalette(colourNum, palette) ;
+
+                    // white is transparent for sprites.
+                    if (colorValue == 0)
+                        continue;
+
+                    int xPix = 0 - tilePixel ;
+                    xPix += 7 ;
+
+                    int pixel = xPos+xPix ;
+
+                    lcd[currentlineoffset + pixel] = colorValue;
+                }
+            }
+        }
     }
 
-    i16 scanLineCounter;
+    u8 GetColourFromPalette(u8 colourIdx, u8 palette)
+    {
+        assert(colourIdx < 4);
+        u8 hi, lo;
+        final switch(colourIdx)
+        {
+            case 0: hi = 1; lo = 0; break;
+            case 1: hi = 3; lo = 2; break;
+            case 2: hi = 5; lo = 4; break;
+            case 3: hi = 7; lo = 6; break;
+        }
+        const int colour = (bitop.val(palette, hi) << 1) | bitop.val(palette, lo);
+        return cast(u8)colour;
+    }
+
+    i16 scanLineCounter = 0;
     immutable u16 lcd_height = 144;
     immutable u16 lcd_width = 160;
     u8[lcd_width*lcd_height] lcd;

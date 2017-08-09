@@ -27,6 +27,7 @@ public:
     u16 SP = 0xFFFE;
     u16 PC = 0x100;
     i16 CycleCount = 0;
+    u64 TotalCycleCount = 0;
     bool IME = true;
 
     @property u16 AF() const { return rAF.val; }
@@ -104,15 +105,15 @@ public:
         // test init
         {
             CPU cpu;
-            assert(0 == cpu.AF);
-            assert(0 == cpu.BC);
-            assert(0 == cpu.DE);
-            assert(0 == cpu.HL);
+            assert(0x01B0 == cpu.AF);
+            assert(0x0013 == cpu.BC);
+            assert(0x00D8 == cpu.DE);
+            assert(0x014D == cpu.HL);
         }
         // test Flag
         {
             CPU cpu;
-            assert(0 == cpu.F);
+            assert(0xB0 == cpu.F);
             cpu.FlagZ = true;
             cpu.FlagN = true;
             cpu.FlagH = true;
@@ -122,19 +123,15 @@ public:
         // test register
         {
             CPU cpu;
-            assert(0 == cpu.AF);
             cpu.AF = 0xFEFC;
             assert(0xFE == cpu.A);
             assert(0xFC == cpu.F);
-            assert(0 == cpu.BC);
             cpu.BC = 0xFEFC;
             assert(0xFE == cpu.B);
             assert(0xFC == cpu.C);
-            assert(0 == cpu.DE);
             cpu.DE = 0xFEFC;
             assert(0xFE == cpu.D);
             assert(0xFC == cpu.E);
-            assert(0 == cpu.HL);
             cpu.HL = 0xFEFC;
             assert(0xFE == cpu.H);
             assert(0xFC == cpu.L);
