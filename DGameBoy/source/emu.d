@@ -22,10 +22,10 @@ public:
     
     void Frame() 
     {
-        cpu.CycleCount = 0;
         CpuStep();
-        Interrupt();
+        //Interrupt();
         ppu.Step(cpu.CycleCount, mem);
+        cpu.CycleCount = 0;
         Interrupt();
     }
 
@@ -66,9 +66,9 @@ public:
                 registers_line ~= format!"%02X %02X "(cast(u8)operand, cast(u8)(operand >> 8));
             registers_line ~= format!"Registers: AF%04X BC%04X DE%04X HL%04X SP%04X"(cpu.AF, cpu.BC, cpu.DE, cpu.HL, cpu.SP);
             writeln(registers_line);
-            state_line = format!"State: cycle%04X lcdc%02X stat%02X ly%02X ie%02X if%02X"(cpu.TotalCycleCount, mem.readU8(mem.LCDC), mem.readU8(mem.STAT), mem.readU8(mem.LY), mem.readU8(mem.IE), mem.readU8(mem.IF));
+            state_line = format!"State: cycle%04X scan%02X lcdc%02X stat%02X ly%02X ie%02X if%02X"(cpu.TotalCycleCount, ppu.scanLineCounter, mem.readU8(mem.LCDC), mem.readU8(mem.STAT), mem.readU8(mem.LY), mem.readU8(mem.IE), mem.readU8(mem.IF));
             writeln(state_line);
-            if(cpu.TotalCycleCount == 0x546F8)
+            if(cpu.TotalCycleCount == 0x3C048)
             {
                 writeln("HALT");
             }
@@ -170,8 +170,7 @@ public:
 
     void jumpInterrupt(const u16 address) {
         cpu.IME = 0;
-        cpu.CycleCount += 12;
-        cpu.TotalCycleCount += 12;
+        extra_cycle(12);
         opcode_CD(address);
         //immutable u8 jump_opcode = 0xCD;
         //immutable instruction = instruction_table[jump_opcode];
@@ -943,8 +942,9 @@ private:
         dec(cpu.L);
     }
     void opcode_35(const u16 operand) {
-        dec(cpu.L);
-        cpu.HL = cpu.L;
+        u8 value = mem.readU8(cpu.HL);
+        dec(value);
+        mem.writeU8(cpu.HL, value);
     }
     // 16-Bit Arithmetic
     // ADD HL,n

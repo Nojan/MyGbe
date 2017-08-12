@@ -338,7 +338,7 @@ private:
         const int colour = (bitop.val(palette, hi) << 1) | bitop.val(palette, lo);
         return cast(u8)colour;
     }
-
+public:
     i16 scanLineCounter = 0;
     immutable u16 lcd_height = 144;
     immutable u16 lcd_width = 160;

@@ -33,7 +33,7 @@ immutable instruction[256] instruction_table = [
 	{ "DEC D", 0, 2 },                       // 0x15
 	{ "LD D, 0x%02X", 1, 4 },               // 0x16
 	{ "RLA", 0, 4 },                           // 0x17
-	{ "JR 0x%02X", 1, 4 },                    // 0x18
+	{ "JR 0x%02X", 1, 6 },                    // 0x18
 	{ "ADD HL, DE", 0, 4 },              // 0x19
 	{ "LD A, (DE)", 0, 4 },               // 0x1a
 	{ "DEC DE", 0, 4 },                     // 0x1b
