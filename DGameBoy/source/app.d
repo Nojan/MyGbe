@@ -30,6 +30,24 @@ void main(string[] args)
 
     auto renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_PRESENTVSYNC);
     auto texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 144, 160);
+
+    version(TileWindow)
+    {
+        immutable int TileSize = 8;
+        immutable int windowTileWidth = 0xF * TileSize;
+        immutable int windowTileHeight = 0x17 * TileSize;
+        auto windowTile = SDL_CreateWindow(
+        "TileWindow",
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        windowTileWidth,
+        windowTileHeight,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+        fatal_error_if(windowTile is null,"Failed to create SDL window!");
+
+        auto rendererTile = SDL_CreateRenderer(windowTile, -1, SDL_RENDERER_PRESENTVSYNC);
+        auto textureTile = SDL_CreateTexture(rendererTile, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, windowTileWidth, windowTileHeight);
+    }
 	
 	bool run = true;
 	Emu emu;
@@ -73,6 +91,37 @@ void main(string[] args)
         SDL_RenderPresent(renderer);
     }
     emu.SetRenderDelegate(&RenderFunction);
+version(TileWindow)
+{
+    void TileRenderFunction(const u8[] tiles)
+    {
+        u32[windowTileWidth*windowTileHeight] pixels;
+        for(int idx = 0; idx<tiles.length; ++idx )
+        {
+            const u8 lcd_pixel = tiles[idx];
+            final switch(lcd_pixel)
+            {
+                case 0:
+                pixels[idx] = 0;
+                break;
+                case 1:
+                pixels[idx] = 0x00777777;
+                break;
+                case 2:
+                pixels[idx] = 0x00CCCCCC;
+                break;
+                case 3:
+                pixels[idx] = 0x00FFFFFF;
+                break;
+            }
+        }
+        SDL_UpdateTexture(textureTile, null, pixels.ptr, windowTileWidth * u32.sizeof);
+        SDL_RenderClear(rendererTile);
+        SDL_RenderCopy(rendererTile, textureTile, null, null);
+        SDL_RenderPresent(rendererTile);
+    }
+    emu.SetTileRenderDelegate(&TileRenderFunction);
+}
 
 	while(run) {
 		SDL_Event event;
@@ -93,5 +142,10 @@ void main(string[] args)
 
 	SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    version(TileWindow)
+    {
+        SDL_DestroyRenderer(rendererTile);
+        SDL_DestroyWindow(windowTile);
+    }
     SDL_Quit();
 }

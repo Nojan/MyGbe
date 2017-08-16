@@ -9,7 +9,7 @@ struct PPU {
     }
     
     void Step(i16 cycleCount, ref Memory mem) 
-    {
+    {       
         u8 status = mem.readU8(mem.STAT);
         immutable bool isEnable = bitop.test(status,7);
         if(false && !isEnable)
@@ -163,13 +163,10 @@ private:
         }
         else
         {
-            // IMPORTANT: This memory region uses signed
-            // bytes as tile identifiers
             tileData = 0x8800 ;
             unsig = false ;
         }
 
-        // which background mem?
         const u8 backgroundMemBitIndex = usingWindow ? 6 : 3;
         if (bitop.test(status, backgroundMemBitIndex))
             backgroundMemory = 0x9C00;
@@ -343,4 +340,84 @@ public:
     immutable u16 lcd_height = 144;
     immutable u16 lcd_width = 160;
     u8[lcd_width*lcd_height] lcd;
+
+version(TileWindow)
+{
+    immutable int tile_size = 8;
+    immutable u16 tile_height = 0x17 * tile_size;
+    immutable u16 tile_width = 0xF * tile_size;
+    u8[tile_width*tile_height] tile_debug;
+
+    void DrawTile(ref Memory mem, u16 tileX, u16 tileY)
+    {
+        immutable u16 beginAddress = cast(u16)(0x8000 + tileY*0x100 + tileX*0x10);
+        immutable u16 endAddress = cast(u16)(beginAddress + (tile_size * 2));
+        immutable u8 palette = mem.readU8(mem.BGP);
+        immutable u16 destXAddressBegin = cast(u16)(tileX * tile_size);
+        u16 destXAddress = destXAddressBegin;
+        u16 destYAddress = cast(u16)(tileY * tile_size);
+
+        for(u16 pixLineAddress = beginAddress; pixLineAddress < endAddress; pixLineAddress += 2)
+        {
+            const u8 data1 = mem.readU8(cast(u16)(pixLineAddress+0));
+            const u8 data2 = mem.readU8(cast(u16)(pixLineAddress+1));
+            for(u8 pix = 0; pix < 8; ++pix)
+            {
+                u8 colourNum = bitop.val(data2, pix) ;
+                colourNum <<= 1;
+                colourNum |= bitop.val(data1, pix) ;
+                const u8 colorValue = GetColourFromPalette(colourNum, palette);
+                const u16 destAddress = cast(u16)(destYAddress*tile_width + destXAddress);
+                tile_debug[destAddress] = colorValue;
+                destXAddress++;
+                if(8 <= destXAddress) 
+                {
+                    destXAddress = destXAddressBegin;
+                    destYAddress++;
+                }
+            }
+        }
+    }
+
+    void OutputTiles(ref Memory mem) {
+        immutable u16 beginAddress = 0x8000;
+        immutable u16 endAddress = 0x97F0;
+        immutable u8 palette = mem.readU8(mem.BGP);
+        u16 destXAddress = 0;
+        u16 destYAddress = 0;
+        
+        // for(u16 pixLineAddress = beginAddress; pixLineAddress < (beginAddress + (tile_size * 2)); pixLineAddress += 2)
+        // {
+        //     const u8 data1 = mem.readU8(cast(u16)(pixLineAddress+0));
+        //     const u8 data2 = mem.readU8(cast(u16)(pixLineAddress+1));
+        //     for(u8 pix = 0; pix < 8; ++pix)
+        //     {
+        //         u8 colourNum = bitop.val(data2, pix) ;
+        //         colourNum <<= 1;
+        //         colourNum |= bitop.val(data1, pix) ;
+        //         const u8 colorValue = GetColourFromPalette(colourNum, palette);
+        //         const u16 destAddress = cast(u16)(destYAddress*tile_width + destXAddress);
+        //         tile_debug[destAddress] = colorValue;
+        //         destXAddress++;
+        //         if(8 <= destXAddress) 
+        //         {
+        //             destXAddress = 0;
+        //             destYAddress++;
+        //         }
+        //     }
+        // }
+
+        for(u16 idX = 0; idX < 16; ++idX)
+        {
+            DrawTile(mem,idX,0);
+        }
+
+        m_tileRenderDelegate(tile_debug);
+    }
+    void SetTileRenderDelegate(void delegate(const u8[]) render)
+    {
+        m_tileRenderDelegate = render;
+    }
+    void delegate(const u8[]) m_tileRenderDelegate;
+}
 }

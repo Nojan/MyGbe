@@ -19,6 +19,14 @@ public:
     {
         ppu.SetRenderDelegate(render);
     }
+
+version(TileWindow)
+{
+    void SetTileRenderDelegate(void delegate(const u8[]) render)
+    {
+        ppu.SetTileRenderDelegate(render);
+    }
+}
     
     void Frame() 
     {
@@ -42,14 +50,14 @@ public:
         CpuExec(opcode, operand, ins);
     }
 
-    version(all)
+    version(LogFileCompare)
     {
         import std.stdio;
         File log_file;
     }
 
     void CpuExec(const u8 opcode, const u16 operand, immutable instruction ins) {
-        if(true)
+        if(false)
         {
             import std.stdio;
             import std.format;
@@ -68,12 +76,7 @@ public:
             writeln(registers_line);
             state_line = format!"State: cycle%04X scan%02X lcdc%02X stat%02X ly%02X ie%02X if%02X"(cpu.TotalCycleCount, ppu.scanLineCounter, mem.readU8(mem.LCDC), mem.readU8(mem.STAT), mem.readU8(mem.LY), mem.readU8(mem.IE), mem.readU8(mem.IF));
             writeln(state_line);
-            if(cpu.TotalCycleCount == 0x3C048)
-            {
-                writeln("HALT");
-            }
-
-            version(all)
+            version(LogFileCompare)
             {
                 import std.stdio;
                 import std.algorithm;
@@ -97,6 +100,12 @@ public:
                 line = chop(log_file.readln()); // Read State
                 CompareToReference(state_line, line);
             }
+        }
+        if(0x466A4 == cpu.TotalCycleCount)
+        {
+            import std.stdio;
+            ppu.OutputTiles(mem);
+            writeln("HALT");
         }
         cpu.PC += ins.length;
         cpu.CycleCount += ins.cycle;

@@ -7,7 +7,8 @@
 	},
 	"buildTypes": {
 		"debug": {
-			"buildOptions": ["debugMode", "debugInfoC"]
+			"buildOptions": ["debugMode", "debugInfoC"],
+			"versions": ["TileWindow"]
 		}
 	}
 }
