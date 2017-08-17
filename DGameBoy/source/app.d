@@ -34,8 +34,8 @@ void main(string[] args)
     version(TileWindow)
     {
         immutable int TileSize = 8;
-        immutable int windowTileWidth = 0xF * TileSize;
-        immutable int windowTileHeight = 0x17 * TileSize;
+        immutable int windowTileWidth = 0x10 * TileSize;
+        immutable int windowTileHeight = 0x18 * TileSize;
         auto windowTile = SDL_CreateWindow(
         "TileWindow",
         SDL_WINDOWPOS_UNDEFINED,

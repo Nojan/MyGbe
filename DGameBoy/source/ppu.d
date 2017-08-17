@@ -344,8 +344,8 @@ public:
 version(TileWindow)
 {
     immutable int tile_size = 8;
-    immutable u16 tile_height = 0x17 * tile_size;
-    immutable u16 tile_width = 0xF * tile_size;
+    immutable u16 tile_height = 0x18 * tile_size;
+    immutable u16 tile_width = 0x10 * tile_size;
     u8[tile_width*tile_height] tile_debug;
 
     void DrawTile(ref Memory mem, u16 tileX, u16 tileY)
@@ -361,7 +361,7 @@ version(TileWindow)
         {
             const u8 data1 = mem.readU8(cast(u16)(pixLineAddress+0));
             const u8 data2 = mem.readU8(cast(u16)(pixLineAddress+1));
-            for(u8 pix = 0; pix < 8; ++pix)
+            for(u8 pix = 7; pix <= 7; --pix, destXAddress++)
             {
                 u8 colourNum = bitop.val(data2, pix) ;
                 colourNum <<= 1;
@@ -369,13 +369,9 @@ version(TileWindow)
                 const u8 colorValue = GetColourFromPalette(colourNum, palette);
                 const u16 destAddress = cast(u16)(destYAddress*tile_width + destXAddress);
                 tile_debug[destAddress] = colorValue;
-                destXAddress++;
-                if(8 <= destXAddress) 
-                {
-                    destXAddress = destXAddressBegin;
-                    destYAddress++;
-                }
             }
+            destXAddress = destXAddressBegin;
+            destYAddress++;
         }
     }
 
@@ -407,9 +403,12 @@ version(TileWindow)
         //     }
         // }
 
-        for(u16 idX = 0; idX < 16; ++idX)
+        for(u16 idY = 0; idY < 0x18; ++idY)
         {
-            DrawTile(mem,idX,0);
+            for(u16 idX = 0; idX < 0x10; ++idX)
+            {
+                DrawTile(mem,idX,idY);
+            }
         }
 
         m_tileRenderDelegate(tile_debug);
