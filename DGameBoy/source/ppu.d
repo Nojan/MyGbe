@@ -202,7 +202,7 @@ private:
 
             // which of the 32 horizontal tiles does this xPos fall within?
             u16 tileCol = (xPos/8);
-            i16 tileNum;
+            u16 tileNum;
 
             // get the tile identity number. Remember it can be signed
             // or unsigned
@@ -210,16 +210,11 @@ private:
             if(unsig)
                 tileNum = cast(u8)mem.readU8(tileAddrss);
             else
-                tileNum = cast(i8)mem.readU8(tileAddrss);
+                tileNum = cast(u8)(128 + cast(i8)mem.readU8(tileAddrss));
 
             // deduce where this tile identifier is in memory. Remember i
             // shown this algorithm earlier
-            u16 tileLocation = tileData ;
-
-            if (unsig)
-                tileLocation += (tileNum * 16) ;
-            else
-                tileLocation += ((tileNum+128) *16) ;
+            u16 tileLocation = cast(u16)(tileData + (tileNum * 16));
 
             // find the correct vertical line we're on of the
             // tile to get the tile data
