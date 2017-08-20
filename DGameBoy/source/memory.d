@@ -155,8 +155,8 @@ private:
         const u16 address = value << 0x8;
         for (u16 i = 0 ; i < 0xA0; i++)
         {
-            const u8 val = readU8(cast(u8)(address+i));
-            writeU8(cast(u8)(0xFE00+i), val);
+            const u8 val = readU8(cast(u16)(address+i));
+            writeU8(cast(u16)(0xFE00+i), val);
         }
     }
 }

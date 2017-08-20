@@ -37,7 +37,6 @@ struct PPU {
                 if(143 == currentline) 
                 {
 					mode = MODE_VBLANK;
-                    m_renderDelegate(lcd);
 				}
 				else 
                     mode = MODE_OAM;
@@ -88,6 +87,8 @@ struct PPU {
                 status = bitop.set(status, 0);
                 status = bitop.reset(status, 1);
                 reqInt = true; //bitop.test(status, 4);
+                OutputTiles(mem);
+                m_renderDelegate(lcd);
             }
             else if(MODE_OAM == mode)
             {
@@ -223,8 +224,7 @@ private:
             // find the correct vertical line we're on of the
             // tile to get the tile data
             //from in memory
-            u8 line = yPos % 8 ;
-            line *= 2; // each vertical line takes up two bytes of memory
+            u8 line = (yPos % 8) *2; // each vertical line takes up two bytes of memory
             u8 data1 = mem.readU8(cast(u16)(tileLocation + line));
             u8 data2 = mem.readU8(cast(u16)(tileLocation + line + 1));
 

@@ -21,8 +21,8 @@ void main(string[] args)
 
     auto window = SDL_CreateWindow(
             "An SDL2 window",
-            SDL_WINDOWPOS_UNDEFINED,
-            SDL_WINDOWPOS_UNDEFINED,
+            15,
+            25,
             800,
             600,
             SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -38,8 +38,8 @@ void main(string[] args)
         immutable int windowTileHeight = 0x18 * TileSize;
         auto windowTile = SDL_CreateWindow(
         "TileWindow",
-        SDL_WINDOWPOS_UNDEFINED,
-        SDL_WINDOWPOS_UNDEFINED,
+        15,
+        675,
         windowTileWidth,
         windowTileHeight,
         SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
