@@ -53,6 +53,10 @@ struct Memory {
         return mem[0..0x8000];
     }
 
+    u8[] VRAM() {
+        return mem[0x8000..0xA000];
+    }
+
     enum : u16 {
         VBLANK = 0x0040,
         LCDSTAT = 0x0048,

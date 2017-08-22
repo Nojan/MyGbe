@@ -57,14 +57,17 @@ version(TileWindow)
     }
 
     void CpuExec(const u8 opcode, const u16 operand, immutable instruction ins) {
-        if(false)
+        if(true)
         {
+            import crc;
+
             import std.stdio;
             import std.format;
             import std.string;
             const u16 PC = cast(u16)(cpu.PC - 1);
             string registers_line;
             string state_line;
+            string crc_line;
             registers_line ~= format!"ROM0:%04X %02X "(PC, opcode);
             if(0 == ins.length)
                 registers_line ~= "      ";
@@ -76,8 +79,12 @@ version(TileWindow)
             writeln(registers_line);
             state_line = format!"State: cycle%04X scan%02X lcdc%02X stat%02X ly%02X ie%02X if%02X"(cpu.TotalCycleCount, ppu.scanLineCounter, mem.readU8(mem.LCDC), mem.readU8(mem.STAT), mem.readU8(mem.LY), mem.readU8(mem.IE), mem.readU8(mem.IF));
             writeln(state_line);
+            crc_line = format!"vram: %x"(crc32(mem.VRAM()));
+            writeln(crc_line);
             version(LogFileCompare)
             {
+                
+                
                 import std.stdio;
                 import std.algorithm;
                 if( !log_file.isOpen() )
@@ -99,12 +106,13 @@ version(TileWindow)
                 CompareToReference(registers_line, line);
                 line = chop(log_file.readln()); // Read State
                 CompareToReference(state_line, line);
+                line = chop(log_file.readln()); // Read CRC
+                CompareToReference(crc_line, line);
             }
         }
         if(0x466A4 == cpu.TotalCycleCount)
         {
             import std.stdio;
-            ppu.OutputTiles(mem);
             writeln("HALT");
         }
         cpu.PC += ins.length;
