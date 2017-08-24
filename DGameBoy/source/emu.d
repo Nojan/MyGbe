@@ -27,6 +27,13 @@ version(TileWindow)
         ppu.SetTileRenderDelegate(render);
     }
 }
+version(BGWindow)
+{
+    void SetBGRenderDelegate(void delegate(const u8[]) render)
+    {
+        ppu.SetBGRenderDelegate(render);
+    }
+}
     
     void Frame() 
     {

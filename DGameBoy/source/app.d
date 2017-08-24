@@ -12,6 +12,27 @@ void fatal_error_if(Cond,Args...)(Cond cond, string format, Args args) {
     }
 }
 
+u32 pix2color(const u8 pixel)
+{
+    u32 result;
+    final switch(pixel)
+    {
+        case 0:
+        result = 0;
+        break;
+        case 1:
+        result = 0x00777777;
+        break;
+        case 2:
+        result = 0x00CCCCCC;
+        break;
+        case 3:
+        result = 0x00FFFFFF;
+        break;
+    }
+    return result;
+}
+
 void main(string[] args)
 {
 	auto libSDLName = "external\\SDL2\\lib\\x64\\SDL2.dll";
@@ -69,21 +90,7 @@ void main(string[] args)
         for(int idx = 0; idx<lcd.length; ++idx )
         {
             const u8 lcd_pixel = lcd[idx];
-            final switch(lcd_pixel)
-            {
-                case 0:
-                pixels[idx] = 0;
-                break;
-                case 1:
-                pixels[idx] = 0x00777777;
-                break;
-                case 2:
-                pixels[idx] = 0x00CCCCCC;
-                break;
-                case 3:
-                pixels[idx] = 0x00FFFFFF;
-                break;
-            }
+            pixels[idx] = pix2color(lcd_pixel);
         }
         SDL_UpdateTexture(texture, null, pixels.ptr, 160 * u32.sizeof);
         SDL_RenderClear(renderer);
@@ -99,21 +106,7 @@ version(TileWindow)
         for(int idx = 0; idx<tiles.length; ++idx )
         {
             const u8 lcd_pixel = tiles[idx];
-            final switch(lcd_pixel)
-            {
-                case 0:
-                pixels[idx] = 0;
-                break;
-                case 1:
-                pixels[idx] = 0x00777777;
-                break;
-                case 2:
-                pixels[idx] = 0x00CCCCCC;
-                break;
-                case 3:
-                pixels[idx] = 0x00FFFFFF;
-                break;
-            }
+            pixels[idx] = pix2color(lcd_pixel);
         }
         SDL_UpdateTexture(textureTile, null, pixels.ptr, windowTileWidth * u32.sizeof);
         SDL_RenderClear(rendererTile);
@@ -122,6 +115,39 @@ version(TileWindow)
     }
     emu.SetTileRenderDelegate(&TileRenderFunction);
 }
+
+    version(BGWindow)
+    {
+        immutable int BGTileSize = 8;
+        immutable int windowBGWidth = 32 * BGTileSize;
+        immutable int windowBGHeight = 32 * BGTileSize;
+        auto windowBG = SDL_CreateWindow(
+        "BGWindow",
+        175,
+        675,
+        windowBGWidth,
+        windowBGHeight,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+        fatal_error_if(windowTile is null,"Failed to create SDL window!");
+
+        auto rendererBG = SDL_CreateRenderer(windowBG, -1, SDL_RENDERER_PRESENTVSYNC);
+        auto textureBG = SDL_CreateTexture(rendererBG, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, windowBGWidth, windowBGHeight);
+
+        void BGRenderFunction(const u8[] bg)
+        {
+            u32[windowBGWidth*windowBGHeight] pixels;
+            for(int idx = 0; idx<bg.length; ++idx )
+            {
+                const u8 lcd_pixel = bg[idx];
+                pixels[idx] = pix2color(lcd_pixel);
+            }
+            SDL_UpdateTexture(textureBG, null, pixels.ptr, windowBGWidth * u32.sizeof);
+            SDL_RenderClear(rendererBG);
+            SDL_RenderCopy(rendererBG, textureBG, null, null);
+            SDL_RenderPresent(rendererBG);
+        }
+        emu.SetBGRenderDelegate(&BGRenderFunction);
+    }
 
 	while(run) {
 		SDL_Event event;

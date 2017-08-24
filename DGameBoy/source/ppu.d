@@ -412,4 +412,14 @@ version(TileWindow)
     }
     void delegate(const u8[]) m_tileRenderDelegate;
 }
+
+version(BGWindow)
+{
+    void SetBGRenderDelegate(void delegate(const u8[]) render)
+    {
+        m_BGRenderDelegate = render;
+    }
+    void delegate(const u8[]) m_BGRenderDelegate;
+}
+
 }
