@@ -157,7 +157,7 @@ private:
         u8 windowX = cast(u8)(mem.readU8(mem.WX) - 7);
 
         const bool usingWindow = bitop.test(status,5) && (windowY <= currentline);
-        const bool unsig = bitop.test(status,4);
+        const bool unsig = !bitop.test(status,4);
         if (unsig)
         {
             tileData = 0x8000 ;

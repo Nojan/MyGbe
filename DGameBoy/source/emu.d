@@ -1052,7 +1052,11 @@ private:
     void opcode_cb_33(const u16 operand) { swap(cpu.E); }
     void opcode_cb_34(const u16 operand) { swap(cpu.H); }
     void opcode_cb_35(const u16 operand) { swap(cpu.L); }
-    void opcode_cb_36(const u16 operand) { swap(cpu.L); }
+    void opcode_cb_36(const u16 operand) { 
+        u8 value = mem.readU8(cpu.HL);
+        swap(value);
+        mem.writeU8(cpu.HL, value);
+    }
     // DAA
     void opcode_27(const u16 operand) { assert(false); }
     // CPL
@@ -1121,14 +1125,32 @@ private:
     void opcode_cb_1D(const u16 operand) { assert(false); }
     void opcode_cb_1E(const u16 operand) { assert(false); }
     // SLA n
-    void opcode_cb_27(const u16 operand) { assert(false); }
-    void opcode_cb_20(const u16 operand) { assert(false); }
-    void opcode_cb_21(const u16 operand) { assert(false); }
-    void opcode_cb_22(const u16 operand) { assert(false); }
-    void opcode_cb_23(const u16 operand) { assert(false); }
-    void opcode_cb_24(const u16 operand) { assert(false); }
-    void opcode_cb_25(const u16 operand) { assert(false); }
-    void opcode_cb_26(const u16 operand) { assert(false); }
+    void sla(ref u8 value)
+    {
+        if(value & 0x80)
+            cpu.FlagC = 1;
+        else
+            cpu.FlagC = 0;
+        value <<= 1;
+        if(value)
+            cpu.FlagZ = 0;
+        else
+            cpu.FlagZ = 1;
+        cpu.FlagN = 0;
+        cpu.FlagH = 0;
+    }
+    void opcode_cb_27(const u16 operand) { sla(cpu.A); }
+    void opcode_cb_20(const u16 operand) { sla(cpu.B); }
+    void opcode_cb_21(const u16 operand) { sla(cpu.C); }
+    void opcode_cb_22(const u16 operand) { sla(cpu.D); }
+    void opcode_cb_23(const u16 operand) { sla(cpu.E); }
+    void opcode_cb_24(const u16 operand) { sla(cpu.H); }
+    void opcode_cb_25(const u16 operand) { sla(cpu.L); }
+    void opcode_cb_26(const u16 operand) { 
+        u8 value = mem.readU8(cpu.HL);
+        sla(value);
+        mem.writeU8(cpu.HL, value);
+    }
     // SRA n
     void opcode_cb_2F(const u16 operand) { assert(false); }
     void opcode_cb_28(const u16 operand) { assert(false); }
