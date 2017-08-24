@@ -8,7 +8,7 @@
 	"buildTypes": {
 		"debug": {
 			"buildOptions": ["debugMode", "debugInfoC"],
-			"versions": ["TileWindow", "BGWindow", "LogFileCompare"]
+			"versions": ["TileWindow", "BGWindow"]
 		}
 	}
 }

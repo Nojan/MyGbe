@@ -88,6 +88,7 @@ struct PPU {
                 status = bitop.reset(status, 1);
                 reqInt = true; //bitop.test(status, 4);
                 OutputTiles(mem);
+                OutputBGMap(mem);
                 m_renderDelegate(lcd);
             }
             else if(MODE_OAM == mode)
@@ -369,12 +370,6 @@ version(TileWindow)
     }
 
     void OutputTiles(ref Memory mem) {
-        immutable u16 beginAddress = 0x8000;
-        immutable u16 endAddress = 0x97F0;
-        immutable u8 palette = mem.readU8(mem.BGP);
-        u16 destXAddress = 0;
-        u16 destYAddress = 0;
-
         for(u16 idY = 0; idY < 0x18; ++idY)
         {
             for(u16 idX = 0; idX < 0x10; ++idX)
@@ -382,18 +377,69 @@ version(TileWindow)
                 DrawTile(mem,idX,idY);
             }
         }
-
         m_tileRenderDelegate(tile_debug);
     }
+
     void SetTileRenderDelegate(void delegate(const u8[]) render)
     {
         m_tileRenderDelegate = render;
     }
+
     void delegate(const u8[]) m_tileRenderDelegate;
 }
 
 version(BGWindow)
 {
+    immutable int bg_tile_size = 8;
+    immutable u16 bg_map_height = 32 * bg_tile_size;
+    immutable u16 bg_map_width = 32 * bg_tile_size;
+    u8[bg_map_width*bg_map_height] bg_map_debug;
+
+    void DrawBGTile(ref Memory mem, u16 tileX, u16 tileY, const u16 tileSource, const u16 mapSource)
+    {
+        const u16 mapAddress = cast(u16)(mapSource + (tileY * 0x20) + tileX);
+        const u8 tileId = mem.readU8(mapAddress);
+        const u8 palette = mem.readU8(mem.BGP);
+        const u16 tileBeginAddress = cast(u16)(tileSource + (tileId * 0x10));
+        const u16 tileEndAddress = cast(u16)(tileBeginAddress + (tile_size * 2));
+
+        immutable u16 destXAddressBegin = cast(u16)(tileX * bg_tile_size);
+        u16 destXAddress = destXAddressBegin;
+        u16 destYAddress = cast(u16)(tileY * bg_tile_size);
+
+        for(u16 pixLineAddress = tileBeginAddress; pixLineAddress < tileEndAddress; pixLineAddress += 2)
+        {
+            const u8 data1 = mem.readU8(cast(u16)(pixLineAddress+0));
+            const u8 data2 = mem.readU8(cast(u16)(pixLineAddress+1));
+            for(u8 pix = 7; pix <= 7; --pix, destXAddress++)
+            {
+                u8 colourNum = bitop.val(data2, pix) ;
+                colourNum <<= 1;
+                colourNum |= bitop.val(data1, pix) ;
+                const u8 colorValue = GetColourFromPalette(colourNum, palette);
+                const u16 destAddress = cast(u16)(destYAddress*bg_map_width + destXAddress);
+                bg_map_debug[destAddress] = colorValue;
+            }
+            destXAddress = destXAddressBegin;
+            destYAddress++;
+        }
+    }
+
+    void OutputBGMap(ref Memory mem) {
+        immutable u16 tileSource = 0x8000;
+        immutable u16 mapSource = 0x9800;
+
+        for(u16 idY = 0; idY < 32; ++idY)
+        {
+            for(u16 idX = 0; idX < 32; ++idX)
+            {
+                DrawBGTile(mem,idX,idY,tileSource,mapSource);
+            }
+        }
+
+        m_BGRenderDelegate(bg_map_debug);
+    }
+    
     void SetBGRenderDelegate(void delegate(const u8[]) render)
     {
         m_BGRenderDelegate = render;

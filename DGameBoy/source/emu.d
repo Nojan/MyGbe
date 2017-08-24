@@ -64,7 +64,7 @@ version(BGWindow)
     }
 
     void CpuExec(const u8 opcode, const u16 operand, immutable instruction ins) {
-        if(true)
+        if(false)
         {
             import crc;
 
