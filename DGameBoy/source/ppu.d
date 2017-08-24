@@ -374,27 +374,6 @@ version(TileWindow)
         immutable u8 palette = mem.readU8(mem.BGP);
         u16 destXAddress = 0;
         u16 destYAddress = 0;
-        
-        // for(u16 pixLineAddress = beginAddress; pixLineAddress < (beginAddress + (tile_size * 2)); pixLineAddress += 2)
-        // {
-        //     const u8 data1 = mem.readU8(cast(u16)(pixLineAddress+0));
-        //     const u8 data2 = mem.readU8(cast(u16)(pixLineAddress+1));
-        //     for(u8 pix = 0; pix < 8; ++pix)
-        //     {
-        //         u8 colourNum = bitop.val(data2, pix) ;
-        //         colourNum <<= 1;
-        //         colourNum |= bitop.val(data1, pix) ;
-        //         const u8 colorValue = GetColourFromPalette(colourNum, palette);
-        //         const u16 destAddress = cast(u16)(destYAddress*tile_width + destXAddress);
-        //         tile_debug[destAddress] = colorValue;
-        //         destXAddress++;
-        //         if(8 <= destXAddress) 
-        //         {
-        //             destXAddress = 0;
-        //             destYAddress++;
-        //         }
-        //     }
-        // }
 
         for(u16 idY = 0; idY < 0x18; ++idY)
         {
