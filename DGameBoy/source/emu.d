@@ -1084,7 +1084,18 @@ private:
         cpu.IME = true;
     }
     // Rotates & Shifts
-    void opcode_07(const u16 operand) { assert(false); }
+    // RLCA
+    void rlc(ref u8 value) {
+        cpu.FlagC = !!(value & 0x80);
+        value <<= 1;
+        value += cpu.FlagC;
+        cpu.FlagZ = !value;
+        cpu.FlagN = 0;
+        cpu.FlagH = 0;
+    }
+    void opcode_07(const u16 operand) { 
+        rlc(cpu.A);
+    }
     void opcode_17(const u16 operand) { assert(false); }
     void opcode_0F(const u16 operand) { assert(false); }
     void opcode_1F(const u16 operand) { assert(false); }
@@ -1161,14 +1172,29 @@ private:
     void opcode_cb_2D(const u16 operand) { assert(false); }
     void opcode_cb_2E(const u16 operand) { assert(false); }
     // SRL n
-    void opcode_cb_3F(const u16 operand) { assert(false); }
-    void opcode_cb_38(const u16 operand) { assert(false); }
-    void opcode_cb_39(const u16 operand) { assert(false); }
-    void opcode_cb_3A(const u16 operand) { assert(false); }
-    void opcode_cb_3B(const u16 operand) { assert(false); }
-    void opcode_cb_3C(const u16 operand) { assert(false); }
-    void opcode_cb_3D(const u16 operand) { assert(false); }
-    void opcode_cb_3E(const u16 operand) { assert(false); }
+    void srl(ref u8 value)
+    {
+        cpu.FlagC = value & 0x01;
+        value >>= 1;
+        if(value)
+            cpu.FlagZ = 0;
+        else
+            cpu.FlagZ = 1;
+        cpu.FlagN = 0;
+        cpu.FlagH = 0;
+    }
+    void opcode_cb_3F(const u16 operand) { srl(cpu.A); }
+    void opcode_cb_38(const u16 operand) { srl(cpu.B); }
+    void opcode_cb_39(const u16 operand) { srl(cpu.C); }
+    void opcode_cb_3A(const u16 operand) { srl(cpu.D); }
+    void opcode_cb_3B(const u16 operand) { srl(cpu.E); }
+    void opcode_cb_3C(const u16 operand) { srl(cpu.H); }
+    void opcode_cb_3D(const u16 operand) { srl(cpu.L); }
+    void opcode_cb_3E(const u16 operand) { 
+        u8 value = mem.readU8(cpu.HL);
+        srl(value);
+        mem.writeU8(cpu.HL, value);
+    }
     // Bit Opcodes
     void bittest(u8 bitIndex, u8 destination) {
         if(bitop.test(destination, bitIndex))

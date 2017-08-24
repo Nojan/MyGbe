@@ -281,7 +281,7 @@ private:
 
                 // its easier to read in from right to left as pixel 0 is
                 // bit 7 in the colour data, pixel 1 is bit 6 etc...
-                for (u8 tilePixel = 7; tilePixel < 7; tilePixel--)
+                for (u8 tilePixel = 7; tilePixel <= 7; tilePixel--)
                 {
                     u8 colourbit = tilePixel ;
                     // read the sprite in backwards for the x axis

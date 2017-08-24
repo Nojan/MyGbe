@@ -17,16 +17,16 @@ u32 pix2color(const u8 pixel)
     u32 result;
     final switch(pixel)
     {
-        case 0:
+        case 3:
         result = 0;
         break;
-        case 1:
+        case 2:
         result = 0x00777777;
         break;
-        case 2:
+        case 1:
         result = 0x00CCCCCC;
         break;
-        case 3:
+        case 0:
         result = 0x00FFFFFF;
         break;
     }
