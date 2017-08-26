@@ -25,13 +25,21 @@ struct Memory {
     pure nothrow @nogc
     void writeU8(u16 address, u8 value)
     { 
-        if(LY == address)
+        if ( address < 0x8000 ) //read only
+        { 
+            return;
+        } 
+        if(LY == address || DIV == address)
             value = 0;
         if(DMA == address)
         {        
             dmaTransfert(value);
             return;
         }
+        if ( ( address >= 0xE000 ) && (address < 0xFE00) ) 
+        { 
+            mem[address-0x2000] = value;
+        } 
         mem[address] = value; 
     }
 

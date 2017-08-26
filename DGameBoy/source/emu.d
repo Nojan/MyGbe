@@ -1099,7 +1099,7 @@ private:
     // NOP
     void opcode_00(const u16 operand) {}
     // HALT
-    void opcode_76(const u16 operand) { assert(false); }
+    void opcode_76(const u16 operand) { /*assert(false);*/ }
     // STOP
     void opcode_10(const u16 operand) { assert(false); }
     // DI

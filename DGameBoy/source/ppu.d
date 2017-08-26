@@ -167,7 +167,7 @@ private:
             tileData = 0x8800 ;
         }
 
-        const u8 backgroundMemBitIndex = usingWindow ? 6 : 3;
+        const u8 backgroundMemBitIndex = 6; //usingWindow ? 6 : 3;
         if (bitop.test(status, backgroundMemBitIndex))
             backgroundMemory = 0x9C00;
         else
