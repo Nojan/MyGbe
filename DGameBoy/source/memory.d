@@ -1,6 +1,15 @@
 import numeric_alias;
+import keys;
 
 struct Memory {
+
+    ref Keys GetKeys() {
+        return keys;
+    }
+
+    void Step(i16 cycleCount) {
+        mem[DIV] += cast(u8)cycleCount;
+    }
 
     pure nothrow @nogc
     u8 readU8(u16 address) const 
@@ -8,14 +17,7 @@ struct Memory {
         u8 value = mem[address];
         if(P1 == address)
         {
-            if( !(value & 0x20) )
-                value = 0xDF;
-            else if( !(value & 0x10) )
-                value = 0xEF;
-            else if( !(value & 0x30) )
-                value = 0xFF;
-            else
-                value = 0;
+            value = keys.GetState(value);
         }
         return value; 
     }
@@ -64,6 +66,7 @@ struct Memory {
         SERIAL = 0x0058,
         JOYPAD = 0x0060,
         P1 = 0xFF00,
+        DIV = 0xFF04,
         TIMA = 0xFF05,
         TMA = 0xFF06,
         TAC = 0xFF07,
@@ -140,6 +143,7 @@ struct Memory {
     }
 
     u8[0x10000] mem;
+    Keys keys;
 
     unittest
     {

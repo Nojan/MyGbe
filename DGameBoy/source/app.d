@@ -156,7 +156,43 @@ version(TileWindow)
 			switch(event.type)
             {
             case SDL_QUIT:
-                run = 0;
+                run = false;
+                break;
+            case SDL_KEYDOWN: 
+            case SDL_KEYUP:
+                {
+                    const SDL_Keycode key = event.key.keysym.sym;
+                    const bool pressed = !(SDL_PRESSED == event.key.state);
+                    switch(key)
+                    {
+                        case SDLK_LEFT:
+                            emu.GetKeys().left = pressed;
+                            break;
+                        case SDLK_RIGHT:
+                            emu.GetKeys().right = pressed;
+                            break;
+                        case SDLK_UP:
+                            emu.GetKeys().up = pressed;
+                            break;
+                        case SDLK_DOWN:
+                            emu.GetKeys().down = pressed;
+                            break;
+                        case SDLK_a:
+                            emu.GetKeys().a = pressed;
+                            break;
+                        case SDLK_s:
+                            emu.GetKeys().b = pressed;
+                            break;
+                        case SDLK_BACKSPACE:
+                            emu.GetKeys().select = pressed;
+                            break;
+                        case SDLK_RETURN:
+                            emu.GetKeys().start = pressed;
+                            break;
+                        default:
+                            break;
+                    }
+                }
                 break;
 			default:
                 break;

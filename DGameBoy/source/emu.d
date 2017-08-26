@@ -3,6 +3,7 @@
 // My Own Gameboy Emulator
 import opcode;
 import memory;
+import keys;
 import numeric_alias;
 import ppu;
 import cpu;
@@ -40,6 +41,7 @@ version(BGWindow)
         CpuStep();
         //Interrupt();
         ppu.Step(cpu.CycleCount, mem);
+        mem.Step(cpu.CycleCount);
         cpu.CycleCount = 0;
         Interrupt();
     }
@@ -192,13 +194,14 @@ version(BGWindow)
         mem.writeU8(mem.IF, flag);
     }
 
+    ref Keys GetKeys() {
+        return mem.GetKeys();
+    }
+
     void jumpInterrupt(const u16 address) {
         cpu.IME = 0;
         extra_cycle(12);
         opcode_CD(address);
-        //immutable u8 jump_opcode = 0xCD;
-        //immutable instruction = instruction_table[jump_opcode];
-        //CpuExec(jump_opcode, address, instruction);
     }
 
 private:
@@ -1058,7 +1061,31 @@ private:
         mem.writeU8(cpu.HL, value);
     }
     // DAA
-    void opcode_27(const u16 operand) { assert(false); }
+    void daa(ref u8 value) {
+        i16 result = value;
+		
+        if(cpu.FlagZ)
+        {
+            if(cpu.FlagH)
+                result = (result - 0x06) & 0xFF;
+            if(cpu.FlagC)
+                result -= 0x60;
+        }
+        else
+        {
+            if(cpu.FlagH || (result & 0xF) > 9)
+                result += 0x06;
+            if(cpu.FlagC || result > 0x9F)
+                result += 0x60;
+        }
+		
+		value = cast(u8)result;
+		cpu.FlagH = 0;
+		cpu.FlagZ = !value;
+		if(0x100 <= value )
+            cpu.FlagC = 1;
+    }
+    void opcode_27(const u16 operand) { daa(cpu.A); }
     // CPL
     void opcode_2F(const u16 operand) { 
         cpu.A = ~cpu.A;
