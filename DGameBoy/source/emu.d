@@ -138,7 +138,7 @@ version(BGWindow)
                 gen ~= "opcode_" ~ idx_str ~ "(" ~ operand ~ ");";
                 gen ~= "break;";
             }
-            gen ~= "default: assert(false);";
+            gen ~= "default: /*assert(false);*/";
             gen ~= "}";
             return gen;
         }
@@ -1111,7 +1111,6 @@ private:
         cpu.IME = true;
     }
     // Rotates & Shifts
-    // RLCA
     void rlc(ref u8 value) {
         cpu.FlagC = !!(value & 0x80);
         value <<= 1;
@@ -1120,12 +1119,46 @@ private:
         cpu.FlagN = 0;
         cpu.FlagH = 0;
     }
-    void opcode_07(const u16 operand) { 
-        rlc(cpu.A);
+    void rl(ref u8 value)
+    {
+        const u8 carry = cpu.FlagC;
+        cpu.FlagC = !!(value & 0x80);
+        value <<= 1;
+        value += carry;
+        cpu.FlagZ = !value;
+        cpu.FlagH = false;
+        cpu.FlagN = false;
     }
-    void opcode_17(const u16 operand) { assert(false); }
-    void opcode_0F(const u16 operand) { assert(false); }
-    void opcode_1F(const u16 operand) { assert(false); }
+    void rrc(ref u8 value) 
+    {
+        cpu.FlagC = value & 0x01;
+        value >>= 1;
+        if(cpu.FlagC) {
+            value |= 0x80;
+        }
+        cpu.FlagZ = !value;
+        cpu.FlagN = false;
+        cpu.FlagH = false;
+    }
+    void rr(ref u8 value) 
+    {
+        value >>= 1;
+        if(cpu.FlagC) {
+            value |= 0x80;
+        }
+        cpu.FlagC = value & 0x01;
+        cpu.FlagZ = !value;
+        cpu.FlagN = false;
+        cpu.FlagH = false;
+    }
+    // RLCA
+    void opcode_07(const u16 operand) { rlc(cpu.A); }
+    // RLA
+    void opcode_17(const u16 operand) { rl(cpu.A); }
+    // RRCA
+    void opcode_0F(const u16 operand) { rrc(cpu.A); }
+    //  RRA
+    void opcode_1F(const u16 operand) { rr(cpu.A); }
     // RLC n
     void opcode_cb_07(const u16 operand) { rlc(cpu.A); }
     void opcode_cb_00(const u16 operand) { rlc(cpu.B); }
@@ -1141,16 +1174,6 @@ private:
         mem.writeU8(cpu.HL, value); 
     }
     // RL n
-    void rl(ref u8 value)
-    {
-        const u8 carry = cpu.FlagC;
-        cpu.FlagC = !!(value & 0x80);
-        value <<= 1;
-        value += carry;
-        cpu.FlagZ = !value;
-        cpu.FlagH = false;
-        cpu.FlagN = false;
-    }
     void opcode_cb_17(const u16 operand) { rl(cpu.A); }
     void opcode_cb_10(const u16 operand) { rl(cpu.B); }
     void opcode_cb_11(const u16 operand) { rl(cpu.C); }
@@ -1165,17 +1188,6 @@ private:
         mem.writeU8(cpu.HL, value); 
     }
     // RRC n
-    void rrc(ref u8 value) 
-    {
-        cpu.FlagC = value & 0x01;
-        value >>= 1;
-        if(cpu.FlagC) {
-            value |= 0x80;
-        }
-        cpu.FlagZ = !value;
-        cpu.FlagN = false;
-        cpu.FlagH = false;
-    }
     void opcode_cb_0F(const u16 operand) { rrc(cpu.A); }
     void opcode_cb_08(const u16 operand) { rrc(cpu.B); }
     void opcode_cb_09(const u16 operand) { rrc(cpu.C); }
@@ -1190,17 +1202,6 @@ private:
         mem.writeU8(cpu.HL, value); 
     }
     // RR n
-    void rr(ref u8 value) 
-    {
-        value >>= 1;
-        if(cpu.FlagC) {
-            value |= 0x80;
-        }
-        cpu.FlagC = value & 0x01;
-        cpu.FlagZ = !value;
-        cpu.FlagN = false;
-        cpu.FlagH = false;
-    }
     void opcode_cb_1F(const u16 operand) { rr(cpu.A); }
     void opcode_cb_18(const u16 operand) { rr(cpu.B); }
     void opcode_cb_19(const u16 operand) { rr(cpu.C); }
@@ -1662,6 +1663,7 @@ public:
         emu.SetRenderDelegate(&RenderFunction);
 
         emu.Reset();
+        emu.cpu.PC = 0x8000;
         const u16 PC = emu.cpu.PC;
         emu.mem.writeU8(cast(u16)(PC+0), cast(u8)0xCD);
         emu.mem.writeU16(cast(u16)(PC+1), cast(u16)(PC+4));

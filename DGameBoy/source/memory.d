@@ -158,7 +158,7 @@ struct Memory {
         Memory m;
         {
             immutable u16 test_value = 0xBEEF;
-            immutable u16 address = 0x100;
+            immutable u16 address = 0x8000;
             m.writeU16(address, test_value);
             assert(test_value == m.readU16(address));
         }

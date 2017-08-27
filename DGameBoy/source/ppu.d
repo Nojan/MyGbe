@@ -87,8 +87,14 @@ struct PPU {
                 status = bitop.set(status, 0);
                 status = bitop.reset(status, 1);
                 reqInt = true; //bitop.test(status, 4);
+                version(TileWindow)
+                {
                 OutputTiles(mem);
+                }
+                version(BGWindow)
+                {
                 OutputBGMap(mem);
+                }
                 m_renderDelegate(lcd);
             }
             else if(MODE_OAM == mode)
