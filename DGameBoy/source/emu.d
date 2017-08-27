@@ -1127,41 +1127,93 @@ private:
     void opcode_0F(const u16 operand) { assert(false); }
     void opcode_1F(const u16 operand) { assert(false); }
     // RLC n
-    void opcode_cb_07(const u16 operand) { assert(false); }
-    void opcode_cb_00(const u16 operand) { assert(false); }
-    void opcode_cb_01(const u16 operand) { assert(false); }
-    void opcode_cb_02(const u16 operand) { assert(false); }
-    void opcode_cb_03(const u16 operand) { assert(false); }
-    void opcode_cb_04(const u16 operand) { assert(false); }
-    void opcode_cb_05(const u16 operand) { assert(false); }
-    void opcode_cb_06(const u16 operand) { assert(false); }
+    void opcode_cb_07(const u16 operand) { rlc(cpu.A); }
+    void opcode_cb_00(const u16 operand) { rlc(cpu.B); }
+    void opcode_cb_01(const u16 operand) { rlc(cpu.C); }
+    void opcode_cb_02(const u16 operand) { rlc(cpu.D); }
+    void opcode_cb_03(const u16 operand) { rlc(cpu.E); }
+    void opcode_cb_04(const u16 operand) { rlc(cpu.H); }
+    void opcode_cb_05(const u16 operand) { rlc(cpu.L); }
+    void opcode_cb_06(const u16 operand) 
+    {
+        u8 value = mem.readU8(cpu.HL);
+        rlc(value);
+        mem.writeU8(cpu.HL, value); 
+    }
     // RL n
-    void opcode_cb_17(const u16 operand) { assert(false); }
-    void opcode_cb_10(const u16 operand) { assert(false); }
-    void opcode_cb_11(const u16 operand) { assert(false); }
-    void opcode_cb_12(const u16 operand) { assert(false); }
-    void opcode_cb_13(const u16 operand) { assert(false); }
-    void opcode_cb_14(const u16 operand) { assert(false); }
-    void opcode_cb_15(const u16 operand) { assert(false); }
-    void opcode_cb_16(const u16 operand) { assert(false); }
+    void rl(ref u8 value)
+    {
+        const u8 carry = cpu.FlagC;
+        cpu.FlagC = !!(value & 0x80);
+        value <<= 1;
+        value += carry;
+        cpu.FlagZ = !value;
+        cpu.FlagH = false;
+        cpu.FlagN = false;
+    }
+    void opcode_cb_17(const u16 operand) { rl(cpu.A); }
+    void opcode_cb_10(const u16 operand) { rl(cpu.B); }
+    void opcode_cb_11(const u16 operand) { rl(cpu.C); }
+    void opcode_cb_12(const u16 operand) { rl(cpu.D); }
+    void opcode_cb_13(const u16 operand) { rl(cpu.E); }
+    void opcode_cb_14(const u16 operand) { rl(cpu.H); }
+    void opcode_cb_15(const u16 operand) { rl(cpu.L); }
+    void opcode_cb_16(const u16 operand) 
+    {
+        u8 value = mem.readU8(cpu.HL);
+        rl(value);
+        mem.writeU8(cpu.HL, value); 
+    }
     // RRC n
-    void opcode_cb_0F(const u16 operand) { assert(false); }
-    void opcode_cb_08(const u16 operand) { assert(false); }
-    void opcode_cb_09(const u16 operand) { assert(false); }
-    void opcode_cb_0A(const u16 operand) { assert(false); }
-    void opcode_cb_0B(const u16 operand) { assert(false); }
-    void opcode_cb_0C(const u16 operand) { assert(false); }
-    void opcode_cb_0D(const u16 operand) { assert(false); }
-    void opcode_cb_0E(const u16 operand) { assert(false); }
+    void rrc(ref u8 value) 
+    {
+        cpu.FlagC = value & 0x01;
+        value >>= 1;
+        if(cpu.FlagC) {
+            value |= 0x80;
+        }
+        cpu.FlagZ = !value;
+        cpu.FlagN = false;
+        cpu.FlagH = false;
+    }
+    void opcode_cb_0F(const u16 operand) { rrc(cpu.A); }
+    void opcode_cb_08(const u16 operand) { rrc(cpu.B); }
+    void opcode_cb_09(const u16 operand) { rrc(cpu.C); }
+    void opcode_cb_0A(const u16 operand) { rrc(cpu.D); }
+    void opcode_cb_0B(const u16 operand) { rrc(cpu.E); }
+    void opcode_cb_0C(const u16 operand) { rrc(cpu.H); }
+    void opcode_cb_0D(const u16 operand) { rrc(cpu.L); }
+    void opcode_cb_0E(const u16 operand)
+    {
+        u8 value = mem.readU8(cpu.HL);
+        rrc(value);
+        mem.writeU8(cpu.HL, value); 
+    }
     // RR n
-    void opcode_cb_1F(const u16 operand) { assert(false); }
-    void opcode_cb_18(const u16 operand) { assert(false); }
-    void opcode_cb_19(const u16 operand) { assert(false); }
-    void opcode_cb_1A(const u16 operand) { assert(false); }
-    void opcode_cb_1B(const u16 operand) { assert(false); }
-    void opcode_cb_1C(const u16 operand) { assert(false); }
-    void opcode_cb_1D(const u16 operand) { assert(false); }
-    void opcode_cb_1E(const u16 operand) { assert(false); }
+    void rr(ref u8 value) 
+    {
+        value >>= 1;
+        if(cpu.FlagC) {
+            value |= 0x80;
+        }
+        cpu.FlagC = value & 0x01;
+        cpu.FlagZ = !value;
+        cpu.FlagN = false;
+        cpu.FlagH = false;
+    }
+    void opcode_cb_1F(const u16 operand) { rr(cpu.A); }
+    void opcode_cb_18(const u16 operand) { rr(cpu.B); }
+    void opcode_cb_19(const u16 operand) { rr(cpu.C); }
+    void opcode_cb_1A(const u16 operand) { rr(cpu.D); }
+    void opcode_cb_1B(const u16 operand) { rr(cpu.E); }
+    void opcode_cb_1C(const u16 operand) { rr(cpu.H); }
+    void opcode_cb_1D(const u16 operand) { rr(cpu.L); }
+    void opcode_cb_1E(const u16 operand)     
+    {
+        u8 value = mem.readU8(cpu.HL);
+        rr(value);
+        mem.writeU8(cpu.HL, value); 
+    }
     // SLA n
     void sla(ref u8 value)
     {
@@ -1190,23 +1242,32 @@ private:
         mem.writeU8(cpu.HL, value);
     }
     // SRA n
-    void opcode_cb_2F(const u16 operand) { assert(false); }
-    void opcode_cb_28(const u16 operand) { assert(false); }
-    void opcode_cb_29(const u16 operand) { assert(false); }
-    void opcode_cb_2A(const u16 operand) { assert(false); }
-    void opcode_cb_2B(const u16 operand) { assert(false); }
-    void opcode_cb_2C(const u16 operand) { assert(false); }
-    void opcode_cb_2D(const u16 operand) { assert(false); }
-    void opcode_cb_2E(const u16 operand) { assert(false); }
+    void sra(ref u8 value)
+    {
+        cpu.FlagC = value & 0x01;
+        value = (value & 0x80) | (value >> 1);
+        cpu.FlagZ = !value;
+        cpu.FlagN = 0;
+        cpu.FlagH = 0;
+    }
+    void opcode_cb_28(const u16 operand) { sra(cpu.A); }
+    void opcode_cb_29(const u16 operand) { sra(cpu.B); }
+    void opcode_cb_2A(const u16 operand) { sra(cpu.C); }
+    void opcode_cb_2B(const u16 operand) { sra(cpu.D); }
+    void opcode_cb_2C(const u16 operand) { sra(cpu.E); }
+    void opcode_cb_2F(const u16 operand) { sra(cpu.H); }
+    void opcode_cb_2D(const u16 operand) { sra(cpu.L); }
+    void opcode_cb_2E(const u16 operand) { 
+        u8 value = mem.readU8(cpu.HL);
+        sra(value);
+        mem.writeU8(cpu.HL, value);
+    }
     // SRL n
     void srl(ref u8 value)
     {
         cpu.FlagC = value & 0x01;
         value >>= 1;
-        if(value)
-            cpu.FlagZ = 0;
-        else
-            cpu.FlagZ = 1;
+        cpu.FlagZ = !value;
         cpu.FlagN = 0;
         cpu.FlagH = 0;
     }
@@ -1509,10 +1570,26 @@ private:
         cpu.PC=operand;
     }
     // CALL cc,nn
-    void opcode_C4(const u16 operand) { assert(false); }
-    void opcode_CC(const u16 operand) { assert(false); }
-    void opcode_D4(const u16 operand) { assert(false); }
-    void opcode_DC(const u16 operand) { assert(false); }
+    void opcode_C4(const u16 operand) 
+    { 
+        if(!cpu.FlagZ)
+            opcode_CD(operand);
+    }
+    void opcode_CC(const u16 operand)
+    { 
+        if(cpu.FlagZ)
+            opcode_CD(operand);
+    }
+    void opcode_D4(const u16 operand)
+    { 
+        if(!cpu.FlagC)
+            opcode_CD(operand);
+    }
+    void opcode_DC(const u16 operand)    
+    { 
+        if(cpu.FlagC)
+            opcode_CD(operand);
+    }
     // Restarts
     // RST n
     void opcode_C7(const u16 operand) { opcode_CD(0x00); }
