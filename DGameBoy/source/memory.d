@@ -74,6 +74,8 @@ struct Memory {
         SERIAL = 0x0058,
         JOYPAD = 0x0060,
         P1 = 0xFF00,
+        STD = 0xFF01,
+        STC = 0xFF02,
         DIV = 0xFF04,
         TIMA = 0xFF05,
         TMA = 0xFF06,

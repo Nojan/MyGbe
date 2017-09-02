@@ -1783,5 +1783,31 @@ public:
         assert(emu.cpu.A == 0);
         emu.Frame();
         assert(emu.cpu.FlagZ == 1);
+
+        void passTest(immutable string filename, immutable string test, ref Emu emu)
+        {
+            emu.Reset();
+            {
+                import std.stdio;
+                import std.file;
+                assert(exists(filename));
+                File rom = File(filename, "rb");
+                rom.rawRead(emu.MemoryCart());
+            }
+            int idx = 0;
+            while(idx < test.length)
+            {
+                emu.Frame();
+                if(0x81 == emu.mem.readU8(emu.mem.STC))
+                {
+                    emu.mem.writeU8(emu.mem.STC, 0x0);
+                    assert(test[idx] == emu.mem.readU8(emu.mem.STD));
+                    emu.mem.writeU8(emu.mem.STD, 0x0);
+                    idx++;
+                }
+            }
+        }
+
+        passTest("testrom/01-special.gb", "01-special\n\n\nPassed", emu);
     }
 }
