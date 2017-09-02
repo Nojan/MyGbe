@@ -1076,9 +1076,17 @@ private:
         cpu.FlagH = 1;
     }
     // CCF
-    void opcode_3F(const u16 operand) { assert(false); }
+    void opcode_3F(const u16 operand) { 
+        cpu.FlagN = false;
+        cpu.FlagH = false;
+        cpu.FlagC = !cpu.FlagC;
+    }
     // SCF
-    void opcode_37(const u16 operand) { assert(false); }
+    void opcode_37(const u16 operand) { 
+        cpu.FlagN = false;
+        cpu.FlagH = false;
+        cpu.FlagC = true;
+    }
     // NOP
     void opcode_00(const u16 operand) {}
     // HALT
