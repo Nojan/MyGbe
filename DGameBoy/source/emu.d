@@ -985,7 +985,12 @@ private:
     }
     // ADD SP,n
     void opcode_E8(const u16 operand) {
-        assert(false);
+        const u16 result = cast(u16)(cpu.SP + (operand & 0xFF));
+        cpu.FlagZ = false;
+        cpu.FlagN = false;
+        cpu.FlagC = (result & 0xFF) < (cpu.SP & 0xFF);
+        cpu.FlagH = (result & 0xF) < (cpu.SP & 0xF);
+        cpu.SP = result;
     }
     // INC nn
     void opcode_03(const u16 operand) {
