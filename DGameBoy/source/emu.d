@@ -1801,7 +1801,7 @@ public:
                 if(0x81 == emu.mem.readU8(emu.mem.STC))
                 {
                     emu.mem.writeU8(emu.mem.STC, 0x0);
-                    assert(test[idx] == emu.mem.readU8(emu.mem.STD));
+                    assert(test[idx] == emu.mem.readU8(emu.mem.STD), "Fail " ~ filename);
                     emu.mem.writeU8(emu.mem.STD, 0x0);
                     idx++;
                 }
@@ -1809,5 +1809,16 @@ public:
         }
 
         passTest("testrom/01-special.gb", "01-special\n\n\nPassed", emu);
+        //passTest("testrom/02-interrupts.gb", "02-interrupts\n\n\nPassed", emu);
+        //passTest("testrom/03-op sp,hl.gb", "03-op sp,hl\n\n\nPassed", emu);
+        //passTest("testrom/04-op r,imm.gb", "04-op r,imm\n\n\nPassed", emu);
+        passTest("testrom/05-op rp.gb", "05-op rp\n\n\nPassed", emu);
+        passTest("testrom/06-ld r,r.gb", "06-ld r,r\n\n\nPassed", emu);
+        passTest("testrom/06-ld r,r.gb", "06-ld r,r\n\n\nPassed", emu);
+        passTest("testrom/07-jr,jp,call,ret,rst.gb", "07-jr,jp,call,ret,rst\n\n\nPassed", emu);
+        passTest("testrom/08-misc instrs.gb", "08-misc instrs\n\n\nPassed", emu);
+        //passTest("testrom/09-op r,r.gb", "09-op r,r\n\n\nPassed", emu);
+        passTest("testrom/10-bit ops.gb", "10-bit ops\n\n\nPassed", emu);
+        //passTest("testrom/11-op a,(hl).gb", "11-op a,(hl)\n\n\nPassed", emu);
     }
 }
