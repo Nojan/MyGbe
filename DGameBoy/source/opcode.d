@@ -40,7 +40,7 @@ immutable instruction[256] instruction_table = [
 	{ "INC E", 0, 2 },                       // 0x1c
 	{ "DEC E", 0, 2 },                       // 0x1d
 	{ "LD E, 0x%02X", 1, 4 },               // 0x1e
-	{ "RRA", 0, 4 },                           // 0x1f
+	{ "RRA", 0, 2 },                           // 0x1f
 	{ "JR NZ, 0x%02X", 1, 4 },             // 0x20
 	{ "LD HL, 0x%04X", 2, 6 },            // 0x21
 	{ "LDI (HL), A", 0, 4 },             // 0x22

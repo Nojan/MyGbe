@@ -68,7 +68,7 @@ version(BGWindow)
     }
 
     void CpuExec(const u8 opcode, const u16 operand, immutable instruction ins) {
-        if(true)
+        if(false)
         {
             import crc;
 
@@ -122,7 +122,7 @@ version(BGWindow)
                 //CompareToReference(crc_line, line);
             }
         }
-        if(0x3df48 == cpu.TotalCycleCount)
+        if(0x37B04C == cpu.TotalCycleCount)
         {
             import std.stdio;
             writeln("HALT");
@@ -567,7 +567,7 @@ private:
         dest = mem.readU16(cpu.SP);
         cpu.SP += 2;
     }
-    void opcode_F1(const u16 operand) { pop(cpu.AF); }
+    void opcode_F1(const u16 operand) { pop(cpu.AF); cpu.AF &= 0xFFF0; }
     void opcode_C1(const u16 operand) { pop(cpu.BC); }
     void opcode_D1(const u16 operand) { pop(cpu.DE); }
     void opcode_E1(const u16 operand) { pop(cpu.HL); }
@@ -966,19 +966,9 @@ private:
     // ADD HL,n
     void add_hl(ref u16 destination, u16 value) {
         const u32 result = destination + value;
-
-        if(result & 0xffff0000) 
-            cpu.FlagC = 1;
-	    else 
-            cpu.FlagC = 0;
-
+        cpu.FlagC = !!(result & 0xffff0000);
+        cpu.FlagH = !!((result ^ destination ^ value) & 0x1000);
         destination = cast(u16)(result & 0xffff);
-
-        if(((destination & 0x0f) + (value & 0x0f)) > 0x0f) 
-            cpu.FlagH = 1;
-	    else 
-            cpu.FlagH = 0;
-
         cpu.FlagN = 0;
     }
     void opcode_09(const u16 operand) {
@@ -1052,8 +1042,7 @@ private:
     // DAA
     void daa(ref u8 value) {
         i16 result = value;
-		
-        if(cpu.FlagZ)
+        if(cpu.FlagN)
         {
             if(cpu.FlagH)
                 result = (result - 0x06) & 0xFF;
@@ -1067,12 +1056,12 @@ private:
             if(cpu.FlagC || result > 0x9F)
                 result += 0x60;
         }
-		
-		value = cast(u8)result;
+        if(0x100 <= result)
+            cpu.FlagC = true;
 		cpu.FlagH = 0;
+
+		value = cast(u8)result;
 		cpu.FlagZ = !value;
-		if(0x100 <= value )
-            cpu.FlagC = 1;
     }
     void opcode_27(const u16 operand) { daa(cpu.A); }
     // CPL
@@ -1131,14 +1120,18 @@ private:
     }
     void rr(ref u8 value) 
     {
-        value >>= 1;
-        if(cpu.FlagC) {
-            value |= 0x80;
-        }
-        cpu.FlagC = value & 0x01;
-        cpu.FlagZ = !value;
+        u8 v = value;
+        const bool oldC = cpu.FlagC;
+        cpu.FlagC = v & 0x01;
+        v >>= 1;
+        if(oldC)
+            v = bitop.set(v,7);
+        else
+            v = bitop.reset(v,7);
+        cpu.FlagZ = !v;
         cpu.FlagN = false;
         cpu.FlagH = false;
+        value = v;
     }
     // RLCA
     void opcode_07(const u16 operand) { rlc(cpu.A); }
@@ -1627,22 +1620,34 @@ private:
     void opcode_C4(const u16 operand) 
     { 
         if(!cpu.FlagZ)
+        {
             opcode_CD(operand);
+            extra_cycle(12);
+        }
     }
     void opcode_CC(const u16 operand)
     { 
         if(cpu.FlagZ)
+        {
             opcode_CD(operand);
+            extra_cycle(12);
+        }
     }
     void opcode_D4(const u16 operand)
     { 
         if(!cpu.FlagC)
+        {
             opcode_CD(operand);
+            extra_cycle(12);
+        }
     }
     void opcode_DC(const u16 operand)    
     { 
         if(cpu.FlagC)
+        {
             opcode_CD(operand);
+            extra_cycle(12);
+        }
     }
     // Restarts
     // RST n
