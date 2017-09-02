@@ -30,7 +30,21 @@ public:
     u64 TotalCycleCount = 0;
     bool IME = true;
 
+    void Reset() 
+    {
+        AF = 0x01B0;
+        BC = 0x0013;
+        DE = 0x00D8;
+        HL = 0x014D;
+        SP = 0xFFFE;
+        PC = 0x100;
+        CycleCount = 0;
+        TotalCycleCount = 0;
+        IME = true;
+    }
+
     @property u16 AF() const { return rAF.val; }
+    @property ref u16 AF() { return rAF.val; }
     @property u16 AF(u16 value) { rAF.val = value; return value; }
 
     @property u8 A() const { return rAF.half.high; }

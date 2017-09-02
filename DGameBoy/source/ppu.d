@@ -10,12 +10,13 @@ struct PPU {
     
     void Step(i16 cycleCount, ref Memory mem) 
     {       
+        u8 control = mem.readU8(mem.LCDC);
         u8 status = mem.readU8(mem.STAT);
-        immutable bool isEnable = bitop.test(status,7);
-        if(false && !isEnable)
+        immutable bool isEnable = bitop.test(control,7);
+        if(!isEnable)
         {
-            scanLineCounter = 0;
-            mem.writeU8(mem.LY, 0);
+            scanLineCounter = 456;
+            mem.mem[mem.LY] = 153;
             status &= 252;
             status = bitop.set(status, 0);
             mem.writeU8(mem.STAT, status);
@@ -34,7 +35,7 @@ struct PPU {
             if(204 <= scanLineCounter)
             {
                 currentline++;
-                if(143 == currentline) 
+                if(144 == currentline) 
                 {
 					mode = MODE_VBLANK;
 				}
@@ -116,7 +117,7 @@ struct PPU {
         }
 
         // check the conincidence flag
-        if (false && currentline == mem.readU8(mem.LYC))
+        if (currentline == mem.readU8(mem.LYC))
         {
             status = bitop.set(status, 2);
             if (bitop.test(status, 6))
@@ -336,7 +337,7 @@ private:
         return cast(u8)colour;
     }
 public:
-    i16 scanLineCounter = 0;
+    i16 scanLineCounter = 456;
     immutable u16 lcd_height = 144;
     immutable u16 lcd_width = 160;
     u8[lcd_width*lcd_height] lcd;

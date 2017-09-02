@@ -137,10 +137,10 @@ struct Memory {
         mem[NR51] = 0xF3;
         mem[NR52] = 0xF1;
         mem[LCDC] = 0x91;
-        mem[STAT] = 0x80;
+        mem[STAT] = 0x01;
         mem[SCY] = 0x00; 
         mem[SCX] = 0x00;
-        mem[LY] = 0x00; 
+        mem[LY] = 0x91; 
         mem[LYC] = 0x00; 
         mem[BGP] = 0xFC; 
         mem[OBP0] = 0xFF;
