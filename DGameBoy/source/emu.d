@@ -1809,6 +1809,6 @@ public:
         passTest("testrom/08-misc instrs.gb", "08-misc instrs\n\n\nPassed", emu);
         //passTest("testrom/09-op r,r.gb", "09-op r,r\n\n\nPassed", emu);
         passTest("testrom/10-bit ops.gb", "10-bit ops\n\n\nPassed", emu);
-        //passTest("testrom/11-op a,(hl).gb", "11-op a,(hl)\n\n\nPassed", emu);
+        passTest("testrom/11-op a,(hl).gb", "11-op a,(hl)\n\n\nPassed", emu);
     }
 }
