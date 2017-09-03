@@ -122,7 +122,7 @@ version(BGWindow)
                 //CompareToReference(crc_line, line);
             }
         }
-        if(0x37B04C == cpu.TotalCycleCount)
+        if(0x85935C == cpu.TotalCycleCount)
         {
             import std.stdio;
             writeln("HALT");
@@ -533,19 +533,15 @@ private:
     }
     // LDHL SP,n
     void opcode_F8(const u16 operand) {
-	    immutable i8 op = cast(i8)(0x00FF & operand);
-        int result = cpu.SP + op;
-        if(result & 0xFFFF0000)
-            cpu.FlagC = 1;
-        else
-            cpu.FlagC = 0;
-        if(((cpu.SP & 0x0F) + (operand & 0x0F)) > 0x0F) 
-            cpu.FlagH = 1;
-        else 
-            cpu.FlagH = 0;
+	    const i8 op = cast(i8)(0x00FF & operand);
+        const int result = cpu.SP + op;
+        cpu.HL = cast(u16)(0xFFFF & result);
+        const u16 check = cast(u16)(cpu.SP ^ op ^ cpu.HL);
+        cpu.FlagC = !!(check & 0x100);
+        cpu.FlagH = !!(check & 0x10);
         cpu.FlagZ = 0;
         cpu.FlagN = 0;
-        cpu.HL = cast(u16)(0xFFFF & result);
+       
     }
     // LD (nn),SP
     void opcode_08(const u16 operand) {
@@ -985,7 +981,8 @@ private:
     }
     // ADD SP,n
     void opcode_E8(const u16 operand) {
-        const u16 result = cast(u16)(cpu.SP + (operand & 0xFF));
+        const i8 val = cast(i8)(cast(u8)(operand));
+        const u16 result = cast(u16)(cast(int)(cpu.SP) + cast(int)(val));
         cpu.FlagZ = false;
         cpu.FlagN = false;
         cpu.FlagC = (result & 0xFF) < (cpu.SP & 0xFF);
@@ -1810,7 +1807,7 @@ public:
 
         passTest("testrom/01-special.gb", "01-special\n\n\nPassed", emu);
         //passTest("testrom/02-interrupts.gb", "02-interrupts\n\n\nPassed", emu);
-        //passTest("testrom/03-op sp,hl.gb", "03-op sp,hl\n\n\nPassed", emu);
+        passTest("testrom/03-op sp,hl.gb", "03-op sp,hl\n\n\nPassed", emu);
         //passTest("testrom/04-op r,imm.gb", "04-op r,imm\n\n\nPassed", emu);
         passTest("testrom/05-op rp.gb", "05-op rp\n\n\nPassed", emu);
         passTest("testrom/06-ld r,r.gb", "06-ld r,r\n\n\nPassed", emu);
