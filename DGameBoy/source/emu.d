@@ -122,7 +122,7 @@ version(BGWindow)
                 //CompareToReference(crc_line, line);
             }
         }
-        if(0x85935C == cpu.TotalCycleCount)
+        if(0x948EA8 == cpu.TotalCycleCount)
         {
             import std.stdio;
             writeln("HALT");
@@ -570,51 +570,44 @@ private:
     // 8-Bit ALU
     void addu8(ref u8 destination, u8 value) {
         u16 result = destination + value;
-	
-	    if(result & 0xFF00) 
-            cpu.FlagC = 1;
-	    else 
-            cpu.FlagC = 0;
-
-        if(((destination & 0x0F) + (value & 0x0F)) > 0x0F) 
-            cpu.FlagH = 1;
-	    else 
-            cpu.FlagH = 0;
-	
+        cpu.FlagC = !!(result & 0xFF00);
+        cpu.FlagH = (((destination & 0x0F) + (value & 0x0F)) > 0x0F);
 	    destination = cast(u8)(result & 0xFF);
-	
-	    if(0 != destination) 
-            cpu.FlagZ = 0;
-	    else 
-            cpu.FlagZ = 1;
-	
+        cpu.FlagZ = !destination;
         cpu.FlagN = 0;
     }
     void addcu8(ref u8 destination, u8 value) {
-        addu8(destination, cast(u8)(value + cpu.FlagC));
+        const u16 C = cpu.FlagC;
+        u16 result = destination + value + C;
+        cpu.FlagC = !!(result & 0xFF00);
+        cpu.FlagH = (((destination & 0x0F) + (value & 0x0F) + C) > 0x0F);
+	    destination = cast(u8)(result & 0xFF);
+        cpu.FlagZ = !destination;
+        cpu.FlagN = 0;
     }
     void subu8(ref u8 destination, u8 value) {
         cpu.FlagN = 1;
-	
-	    if(value > destination) 
-            cpu.FlagC = 1;
-	    else 
-            cpu.FlagC = 0;
-	
-	    if((value & 0x0F) > (destination & 0x0F)) 
-            cpu.FlagH = 1;
-	    else 
-            cpu.FlagH = 0;
-	
+        cpu.FlagH = ((value & 0x0F) > (destination & 0x0F));
+        cpu.FlagC = (value > destination);
 	    destination -= value;
-	
-	    if(0 != destination) 
-            cpu.FlagZ = 0;
-        else 
-            cpu.FlagZ = 1;
+        cpu.FlagZ= !destination;
+
     }
     void subcu8(ref u8 destination, u8 value) {
-        subu8(destination, cast(u8)(value + cpu.FlagC));
+        // Thanks https://github.com/Dooskington/gamelad 
+        // Couldn't figure out this one
+        int un = cast(int)value;
+        int tmpa = cast(int)destination;
+        int ua = tmpa;
+        ua -= un;
+        if(cpu.FlagC)
+            ua -= 1;
+        cpu.FlagN = 1;
+        cpu.FlagC = (ua < 0);
+        ua &= 0xFF;
+        cpu.FlagZ = !ua;
+        cpu.FlagH = (((ua ^ un ^ tmpa) & 0x10) == 0x10);
+        destination = cast(u8)ua;
     }
     void and(ref u8 destination, u8 value) {
         destination = destination & value;
@@ -1808,7 +1801,7 @@ public:
         passTest("testrom/01-special.gb", "01-special\n\n\nPassed", emu);
         //passTest("testrom/02-interrupts.gb", "02-interrupts\n\n\nPassed", emu);
         passTest("testrom/03-op sp,hl.gb", "03-op sp,hl\n\n\nPassed", emu);
-        //passTest("testrom/04-op r,imm.gb", "04-op r,imm\n\n\nPassed", emu);
+        passTest("testrom/04-op r,imm.gb", "04-op r,imm\n\n\nPassed", emu);
         passTest("testrom/05-op rp.gb", "05-op rp\n\n\nPassed", emu);
         passTest("testrom/06-ld r,r.gb", "06-ld r,r\n\n\nPassed", emu);
         passTest("testrom/06-ld r,r.gb", "06-ld r,r\n\n\nPassed", emu);
