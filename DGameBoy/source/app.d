@@ -5,7 +5,7 @@ import emu;
 import numeric_alias;
 
 void fatal_error_if(Cond,Args...)(Cond cond, string format, Args args) {
-    import std.c.stdlib;
+    import core.stdc.stdlib;
 	if(!!cond) {
         stderr.writefln(format,args);
         exit(1);
