@@ -35,8 +35,7 @@ u32 pix2color(const u8 pixel)
 
 void main(string[] args)
 {
-	auto libSDLName = "external\\SDL2\\lib\\x64\\SDL2.dll";
-	DerelictSDL2.load(libSDLName);
+	DerelictSDL2.load();
 
     fatal_error_if(SDL_Init(SDL_INIT_VIDEO), "Failed to initialize sdl!");
 
