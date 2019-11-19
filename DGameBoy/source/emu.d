@@ -122,7 +122,7 @@ version(BGWindow)
                 //CompareToReference(crc_line, line);
             }
         }
-        if(0x948EA8 == cpu.TotalCycleCount)
+        if(false && 0x5Ef58 == cpu.TotalCycleCount)
         {
             import std.stdio;
             writeln("HALT");
