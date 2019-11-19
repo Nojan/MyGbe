@@ -2,8 +2,8 @@ import numeric_alias;
 
 struct RegHalf { u8 low = 0; u8 high = 0; }
 union Reg { 
-    RegHalf half; 
     u16 val = 0; 
+    RegHalf half; 
     
     unittest
     {
